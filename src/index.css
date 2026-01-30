@@ -1,0 +1,213 @@
+
+
+@import '@fontsource/space-grotesk/400.css';
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/600.css';
+@import '@fontsource/space-grotesk/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* Soft Neubrutalism Design System */
+
+@layer base {
+  :root {
+    /* Core background - warm cream */
+    --background: 40 33% 96%;
+    --foreground: 0 0% 0%;
+
+    /* Cards and surfaces */
+    --card: 40 33% 98%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 40 33% 98%;
+    --popover-foreground: 0 0% 0%;
+
+    /* Primary - Electric Blue */
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Vibrant Orange */
+    --secondary: 25 100% 55%;
+    --secondary-foreground: 0 0% 0%;
+
+    /* Muted surfaces */
+    --muted: 40 20% 90%;
+    --muted-foreground: 0 0% 30%;
+
+    /* Accent - Cyber Yellow */
+    --accent: 50 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    /* Destructive - Tomato Red */
+    --destructive: 8 85% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs */
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 210 100% 50%;
+
+    /* Neubrutalism specific */
+    --radius: 1.25rem;
+    --shadow-offset: 4px;
+    --border-width: 3px;
+
+    /* Additional accent colors */
+    --success: 145 70% 45%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 45 100% 50%;
+    --warning-foreground: 0 0% 0%;
+
+    /* Sidebar */
+    --sidebar-background: 40 33% 96%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 210 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 50 100% 50%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 0%;
+    --sidebar-ring: 210 100% 50%;
+  }
+
+  .dark {
+    --background: 0 0% 8%;
+    --foreground: 40 33% 96%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 40 33% 96%;
+
+    --popover: 0 0% 12%;
+    --popover-foreground: 40 33% 96%;
+
+    --primary: 210 100% 55%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 25 100% 55%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 40 20% 70%;
+
+    --accent: 50 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 8 85% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 33% 96%;
+    --input: 40 33% 96%;
+    --ring: 210 100% 55%;
+
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 40 33% 96%;
+    --sidebar-primary: 210 100% 55%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 50 100% 50%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 40 33% 96%;
+    --sidebar-ring: 210 100% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+@layer components {
+  /* Neubrutalism card style */
+  .neu-card {
+    @apply bg-card border-[3px] border-foreground rounded-[20px] transition-all duration-200;
+    box-shadow: 4px 4px 0 0 hsl(var(--foreground));
+  }
+
+  .neu-card:hover {
+    box-shadow: 6px 6px 0 0 hsl(var(--foreground));
+    transform: translate(-2px, -2px);
+  }
+
+  /* Neubrutalism button base */
+  .neu-button {
+    @apply font-semibold border-[3px] border-foreground rounded-[12px] transition-all duration-150;
+    box-shadow: 3px 3px 0 0 hsl(var(--foreground));
+  }
+
+  .neu-button:hover {
+    box-shadow: 4px 4px 0 0 hsl(var(--foreground));
+    transform: translate(-1px, -1px);
+  }
+
+  .neu-button:active {
+    box-shadow: 1px 1px 0 0 hsl(var(--foreground));
+    transform: translate(2px, 2px);
+  }
+
+  /* Primary button variant */
+  .neu-button-primary {
+    @apply neu-button bg-primary text-primary-foreground;
+  }
+
+  /* Secondary button variant */
+  .neu-button-secondary {
+    @apply neu-button bg-secondary text-secondary-foreground;
+  }
+
+  /* Accent button variant */
+  .neu-button-accent {
+    @apply neu-button bg-accent text-accent-foreground;
+  }
+
+  /* Ghost button variant */
+  .neu-button-ghost {
+    @apply font-semibold border-[3px] border-transparent rounded-[12px] transition-all duration-150;
+  }
+
+  .neu-button-ghost:hover {
+    @apply bg-muted;
+  }
+
+  /* Input style */
+  .neu-input {
+    @apply bg-card border-[3px] border-foreground rounded-[12px] px-4 py-3 font-medium transition-all duration-150;
+    box-shadow: 3px 3px 0 0 hsl(var(--foreground));
+  }
+
+  .neu-input:focus {
+    @apply outline-none ring-2 ring-primary ring-offset-2;
+    box-shadow: 4px 4px 0 0 hsl(var(--foreground));
+  }
+
+  /* Badge styles */
+  .neu-badge {
+    @apply inline-flex items-center px-3 py-1 font-semibold text-sm border-[2px] border-foreground rounded-full;
+    box-shadow: 2px 2px 0 0 hsl(var(--foreground));
+  }
+
+  .neu-badge-primary {
+    @apply neu-badge bg-primary text-primary-foreground;
+  }
+
+  .neu-badge-secondary {
+    @apply neu-badge bg-secondary text-secondary-foreground;
+  }
+
+  .neu-badge-accent {
+    @apply neu-badge bg-accent text-accent-foreground;
+  }
+
+  .neu-badge-success {
+    @apply neu-badge bg-success text-success-foreground;
+  }
+
+  .neu-badge-destructive {
+    @apply neu-badge bg-destructive text-destructive-foreground;
+  }
+}
