@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/authContext";
 import { generateQRPayload } from "@/lib/qr";
 import {QRCodeCanvas} from "qrcode.react";
+import QRCode from "react-qr-code";
 
 // Mock user data
 const mockUser = {
@@ -113,13 +114,11 @@ export default function QRPass() {
               <div className="p-6 flex flex-col items-center bg-card">
                 <div className="bg-foreground rounded-2xl p-4 shadow-neu">
                   {qrValue ? (
-                    <QRCodeCanvas
+                    <QRCode
                       value={qrValue}
                       size={280}
                       bgColor="#ffffff"
                       fgColor="#000000"
-                      level="H"
-                      includeMargin={true}
                     />
                   ) : (
                     <div className="w-56 h-56 flex items-center justify-center text-muted-foreground">No QR</div>

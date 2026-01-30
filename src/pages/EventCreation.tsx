@@ -45,6 +45,7 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
   const navigate = useNavigate();
   const authContext = useAuth();
   const user = authContext?.currentUser;
+  const { currentUser } = useAuth();
 
   const initialDate = initialData?.date
     ? parse(initialData.date, "MMM d, yyyy", new Date())
