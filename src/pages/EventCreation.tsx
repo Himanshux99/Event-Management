@@ -43,6 +43,8 @@ const colleges = ["Host College Only", "Partner Colleges", "All Colleges"];
 
 const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationProps) => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const user = currentUser;
   const authContext = useAuth();
   const user = authContext?.currentUser;
 
