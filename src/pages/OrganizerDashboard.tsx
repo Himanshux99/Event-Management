@@ -45,22 +45,22 @@ const handleSeedData = async () => {
 };
 
 export default function OrganizerDashboard() {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [events, setEvents] = useState<any[]>([]);
   const [draftEvents, setDraftEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrganizerEvents = async () => {
-      if (!user) return;
+      if (!currentUser) return;
       
       try {
         setLoading(true);
         const publishedEvents = await eventDB.getByQuery([
-          where('organizerId', '==', user.uid),
+          where('organizerId', '==', currentUser.uid),
           where('status', '!=', 'draft')
         ]);
-        const drafts = await eventDB.getDrafts(user.uid);
+        const drafts = await eventDB.getDrafts(currentUser.uid);
         setEvents(publishedEvents);
         setDraftEvents(drafts);
       } catch (error) {
@@ -72,7 +72,7 @@ export default function OrganizerDashboard() {
     };
 
     fetchOrganizerEvents();
-  }, [user]);
+  }, [currentUser]);
 
   const handleDeleteDraft = async (draftId: string) => {
     if (confirm("Are you sure you want to delete this draft?")) {
@@ -94,7 +94,7 @@ export default function OrganizerDashboard() {
       
       // Refresh events
       const publishedEvents = await eventDB.getByQuery([
-        where('organizerId', '==', user.uid),
+        where('organizerId', '==', currentUser.uid),
         where('status', '!=', 'draft')
       ]);
       setEvents(publishedEvents);
