@@ -5,36 +5,86 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { userDB } from "@/lib/firebaseDB";
+
+export type Role = "student" | "organizer";
+
+export interface AppUser {
+  uid: string;
+  email: string | null;
+  name?: string | null;
+  role: Role;
+}
 
 interface AuthContextType {
-  user: User | null;
+  currentUser: AppUser | null;
   loading: boolean;
   isAuthenticated: boolean;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Temporary mock roles fallback (if Firestore profile not found)
+const MOCK_USER_ROLES: Record<string, Role> = {
+  // example: 'uid123': 'organizer'
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        // try to fetch user profile from Firestore
+        try {
+          const profile = await userDB.getById(fbUser.uid);
+          console.log("Fetched profile from Firestore:", profile);
+          
+          const role: Role = (profile && (profile.role as Role)) || MOCK_USER_ROLES[fbUser.uid] || "student";
+          console.log("Determined role:", role);
+
+          setCurrentUser({
+            uid: fbUser.uid,
+            email: fbUser.email,
+            name: (profile && profile.name) || fbUser.displayName || null,
+            role,
+          });
+        } catch (err) {
+          console.error("Error fetching profile:", err);
+          // fallback to basic user with default role
+          setCurrentUser({
+            uid: fbUser.uid,
+            email: fbUser.email,
+            name: fbUser.displayName || null,
+            role: MOCK_USER_ROLES[fbUser.uid] || "student",
+          });
+        }
+      } else {
+        setCurrentUser(null);
+      }
+
       setLoading(false);
     });
 
     return unsubscribe;
   }, []);
 
+  const logout = async () => {
+    await signOut(auth);
+    setCurrentUser(null);
+  };
+
   return (
     <AuthContext.Provider
       value={{
-        user,
+        currentUser,
         loading,
-        isAuthenticated: !!user,
+        isAuthenticated: !!currentUser,
+        logout,
       }}
     >
       {children}

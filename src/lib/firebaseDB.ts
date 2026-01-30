@@ -4,6 +4,7 @@ import {
   getDoc, 
   getDocs, 
   addDoc, 
+  setDoc,
   updateDoc, 
   deleteDoc, 
   query, 
@@ -177,7 +178,7 @@ export const userDB = {
         updatedAt: Timestamp.now(),
       });
     } else {
-      await updateDoc(userRef, {
+      await setDoc(userRef, {
         ...userData,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
