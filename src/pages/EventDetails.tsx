@@ -4,7 +4,9 @@ import { Layout } from "@/components/layout/Layout";
 import { NeuButton } from "@/components/ui/NeuButton";
 import { NeuCard } from "@/components/ui/NeuCard";
 import { NeuBadge } from "@/components/ui/NeuBadge";
-import { eventDB } from "@/lib/firebaseDB";
+import { eventDB, registrationDB } from "@/lib/firebaseDB";
+import { useAuth } from "@/context/authContext";
+import RegistrationModal from "@/components/eventCreation/RegistrationModal";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -54,7 +56,8 @@ interface EventData {
   isTeamEvent?: boolean;
   minTeamSize?: number | null;
   maxTeamSize?: number | null;
-  rounds?: number;
+  eventDescription?: string;
+  rounds?: any[];
 }
 
 // Helper functions
@@ -79,10 +82,12 @@ const formatDuration = (minutes?: number): string => {
 
 export default function EventDetails(): JSX.Element {
   const { id } = useParams();
+  const { currentUser } = useAuth();
   const [event, setEvent] = useState<EventData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [isLiked, setIsLiked] = useState<boolean>(false);
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
 
   // Fetch event from Firestore
   useEffect(() => {
@@ -103,6 +108,22 @@ export default function EventDetails(): JSX.Element {
 
     fetchEvent();
   }, [id]);
+
+  // Check if user is already registered
+  useEffect(() => {
+    const checkRegistration = async () => {
+      if (!currentUser || !id) return;
+      
+      try {
+        const registered = await registrationDB.checkRegistration(currentUser.uid, id);
+        setIsRegistered(registered);
+      } catch (error) {
+        console.error("Error checking registration:", error);
+      }
+    };
+
+    checkRegistration();
+  }, [currentUser, id]);
 
   if (loading) {
     return (
@@ -140,15 +161,14 @@ export default function EventDetails(): JSX.Element {
 
   const spotsLeft = event.maxCapacity - event.registeredCount;
   const isFull = spotsLeft <= 0;
-  const canRegister = event.status === "registration-open" && !isRegistered;
+  const canRegister = !isRegistered && !isFull && (event.status === "registration-open" || event.status === "published");
 
-  const handleRegister = (): void => {
-    if (canRegister) {
-      setIsRegistered(true);
-      toast.success("Successfully registered!", {
-        description: "Check your email for the QR pass.",
-      });
-    }
+  const handleRegistrationSuccess = () => {
+    setShowRegistrationModal(false);
+    setIsRegistered(true);
+    toast.success("Registration successful!", {
+      description: "Check your email for confirmation.",
+    });
   };
 
   const handleShare = async (): Promise<void> => {
@@ -309,6 +329,67 @@ export default function EventDetails(): JSX.Element {
               </NeuCard>
             )}
 
+            {/* Event Description */}
+            {event.eventDescription && (
+              <NeuCard variant="static">
+                <h2 className="text-xl font-bold mb-4">Event Description</h2>
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {event.eventDescription}
+                </p>
+              </NeuCard>
+            )}
+
+            {/* Rounds Section */}
+            {event.rounds && event.rounds.length > 0 && (
+              <NeuCard variant="static">
+                <h2 className="text-xl font-bold mb-6">Event Rounds</h2>
+                <div className="space-y-4">
+                  {event.rounds.map((round: any, index: number) => (
+                    <div
+                      key={index}
+                      className="p-4 border-[3px] border-foreground/10 rounded-[12px] space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-lg text-primary">
+                          {round.title || `Round ${index + 1}`}
+                        </h3>
+                        <span className="text-xs px-2 py-1 bg-primary/20 text-primary rounded font-medium">
+                          Round {index + 1}
+                        </span>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {round.startDate && (
+                          <div className="flex items-start gap-2 p-2 bg-muted rounded">
+                            <Calendar className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Start Date</p>
+                              <p className="font-medium">{round.startDate}</p>
+                            </div>
+                          </div>
+                        )}
+                        {round.endDate && (
+                          <div className="flex items-start gap-2 p-2 bg-muted rounded">
+                            <Calendar className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">End Date</p>
+                              <p className="font-medium">{round.endDate}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {round.description && (
+                        <div className="text-sm text-muted-foreground p-3 bg-muted rounded border-l-4 border-primary">
+                          {round.description}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </NeuCard>
+            )}
+
             {/* Guidelines */}
             {event.guidelines && (
               <NeuCard variant="static">
@@ -361,17 +442,6 @@ export default function EventDetails(): JSX.Element {
                       <p className="font-semibold">{event.maxCapacity} spots</p>
                     </div>
                   </div>
-
-                  {/* Rounds */}
-                  {event.rounds && event.rounds > 1 && (
-                    <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                      <Calendar className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Rounds</p>
-                        <p className="font-semibold">{event.rounds} round(s)</p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </NeuCard>
             )}
@@ -466,17 +536,25 @@ export default function EventDetails(): JSX.Element {
                     <CheckCircle2 className="w-5 h-5" />
                     Registered
                   </NeuButton>
-                ) : canRegister ? (
-                  <NeuButton variant="primary" className="w-full" onClick={handleRegister}>
+                ) : canRegister && currentUser ? (
+                  <NeuButton 
+                    variant="primary" 
+                    className="w-full" 
+                    onClick={() => setShowRegistrationModal(true)}
+                  >
                     {isFull ? "Join Waitlist" : "Register Now"}
                   </NeuButton>
                 ) : (
                   <NeuButton variant="outline" className="w-full" disabled>
-                    {event.status === "upcoming"
-                      ? "Coming Soon"
-                      : event.status === "closed"
-                        ? "Event Ended"
-                        : "Registration Closed"}
+                    {!currentUser
+                      ? "Login to Register"
+                      : event.status === "upcoming"
+                        ? "Coming Soon"
+                        : event.status === "closed"
+                          ? "Event Ended"
+                          : isFull
+                            ? "Event Full"
+                            : "Registration Closed"}
                   </NeuButton>
                 )}
 
@@ -504,6 +582,17 @@ export default function EventDetails(): JSX.Element {
           </motion.div>
         </div>
       </div>
+
+      {/* Registration Modal */}
+      {currentUser && event && (
+        <RegistrationModal
+          isOpen={showRegistrationModal}
+          onClose={() => setShowRegistrationModal(false)}
+          event={event}
+          user={currentUser}
+          onRegistrationSuccess={handleRegistrationSuccess}
+        />
+      )}
     </Layout>
   );
 }

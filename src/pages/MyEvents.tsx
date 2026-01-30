@@ -4,7 +4,9 @@ import { Layout } from "@/components/layout/Layout";
 import { NeuButton } from "@/components/ui/NeuButton";
 import { NeuCard } from "@/components/ui/NeuCard";
 import { NeuBadge } from "@/components/ui/NeuBadge";
+import TeamInvitations from "@/components/TeamInvitations";
 import { mockEvents } from "@/data/mockEvents";
+import { useAuth } from "@/context/authContext";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -15,9 +17,10 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowRight,
+  Users,
 } from "lucide-react";
 
-type TabType = "upcoming" | "past" | "waitlisted";
+type TabType = "upcoming" | "past" | "waitlisted" | "invitations";
 
 // Mock user's registered events
 const userEvents = {
@@ -27,15 +30,17 @@ const userEvents = {
 };
 
 export default function MyEvents() {
+  const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("upcoming");
 
   const tabs = [
     { id: "upcoming" as TabType, label: "Upcoming", count: userEvents.upcoming.length },
     { id: "past" as TabType, label: "Past", count: userEvents.past.length },
     { id: "waitlisted" as TabType, label: "Waitlisted", count: userEvents.waitlisted.length },
+    { id: "invitations" as TabType, label: "Team Invitations", icon: Users },
   ];
 
-  const currentEvents = userEvents[activeTab];
+  const currentEvents = activeTab !== "invitations" ? userEvents[activeTab as Exclude<TabType, "invitations">] : [];
 
   return (
     <Layout>
@@ -71,20 +76,35 @@ export default function MyEvents() {
                 variant={activeTab === tab.id ? "primary" : "outline"}
                 onClick={() => setActiveTab(tab.id)}
               >
+                {tab.icon && <tab.icon className="w-4 h-4 mr-1" />}
                 {tab.label}
-                <NeuBadge
-                  variant={activeTab === tab.id ? "accent" : "default"}
-                  size="sm"
-                >
-                  {tab.count}
-                </NeuBadge>
+                {tab.id !== "invitations" && (
+                  <NeuBadge
+                    variant={activeTab === tab.id ? "accent" : "default"}
+                    size="sm"
+                  >
+                    {tab.count}
+                  </NeuBadge>
+                )}
               </NeuButton>
             ))}
           </div>
         </motion.div>
 
         {/* Events List */}
-        {currentEvents.length > 0 ? (
+        {activeTab === "invitations" ? (
+          currentUser ? (
+            <TeamInvitations userId={currentUser.uid} />
+          ) : (
+            <NeuCard variant="static" className="text-center py-16">
+              <AlertCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+              <h3 className="text-xl font-bold mb-2">Please Login</h3>
+              <p className="text-muted-foreground mb-6">
+                You need to be logged in to see team invitations.
+              </p>
+            </NeuCard>
+          )
+        ) : currentEvents.length > 0 ? (
           <div className="space-y-4">
             {currentEvents.map((event, index) => (
               <motion.div

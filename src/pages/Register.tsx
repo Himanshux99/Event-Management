@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { NeuButton } from "@/components/ui/NeuButton";
@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { Mail, Lock, User, BookOpen, ArrowRight, UserCheck, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { createUser } from "../lib/firebaseAuth";
-import { userDB } from "../lib/firebaseDB";
+import { userDB, collegeDB } from "../lib/firebaseDB";
 import { useNavigate } from "react-router-dom";
 import { FirebaseError } from "firebase/app";
 
@@ -17,6 +17,8 @@ type Role = "student" | "organizer";
 export default function Register() {
   const [step, setStep] = useState<"role-select" | "form">("role-select");
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [colleges, setColleges] = useState<any[]>([]);
+  const [loadingColleges, setLoadingColleges] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -26,12 +28,31 @@ export default function Register() {
     branch: "",
     year: "",
     organizationName: "",
+    organizerCollege: "",
     contactNumber: "",
     password: "",
     confirmPassword: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Fetch colleges on component mount
+  useEffect(() => {
+    const fetchColleges = async () => {
+      try {
+        setLoadingColleges(true);
+        const collegesList = await collegeDB.getAll();
+        setColleges(collegesList);
+      } catch (error) {
+        console.error("Error fetching colleges:", error);
+        toast.error("Failed to load colleges");
+      } finally {
+        setLoadingColleges(false);
+      }
+    };
+
+    fetchColleges();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -73,13 +94,17 @@ export default function Register() {
         profileData.year = formData.year;
       } else {
         profileData.organizationName = formData.organizationName;
+        profileData.organizerCollege = formData.organizerCollege;
         profileData.contactNumber = formData.contactNumber;
       }
 
       await userDB.upsert(userCredential.user.uid, profileData);
       
       toast.success("Registration successful!");
-      navigate("/login");
+      if(selectedRole==="organizer")
+        navigate("/organizer-dashboard");
+      else
+        navigate("/my-events");
     } catch (error) {
       let message = "Registration failed. Please try again.";
       
@@ -309,14 +334,21 @@ export default function Register() {
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold mb-2">College</label>
-                        <NeuInput
-                          type="text"
+                        <select
                           name="college"
-                          placeholder="ABC Engineering College"
                           value={formData.college}
                           onChange={handleChange}
+                          className="flex h-12 w-full bg-card border-[3px] border-foreground rounded-[12px] px-4 py-3 text-base font-medium shadow-neu transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                           required
-                        />
+                          disabled={loadingColleges}
+                        >
+                          <option value="">{loadingColleges ? "Loading colleges..." : "Select College"}</option>
+                          {colleges.map((college) => (
+                            <option key={college.id} value={college.name}>
+                              {college.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
                       <div>
@@ -345,6 +377,25 @@ export default function Register() {
                         onChange={handleChange}
                         required
                       />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">College</label>
+                      <select
+                        name="organizerCollege"
+                        value={formData.organizerCollege}
+                        onChange={handleChange}
+                        className="flex h-12 w-full bg-card border-[3px] border-foreground rounded-[12px] px-4 py-3 text-base font-medium shadow-neu transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                        required
+                        disabled={loadingColleges}
+                      >
+                        <option value="">{loadingColleges ? "Loading colleges..." : "Select College"}</option>
+                        {colleges.map((college) => (
+                          <option key={college.id} value={college.name}>
+                            {college.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div>

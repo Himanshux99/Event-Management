@@ -16,6 +16,8 @@ export interface AppUser {
   email: string | null;
   name?: string | null;
   role: Role;
+  college?: string | null;
+  organizerCollege?: string | null;
 }
 
 interface AuthContextType {
@@ -41,7 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (fbUser) {
         // try to fetch user profile from Firestore
         try {
-          const profile = await userDB.getById(fbUser.uid);
+          const profile: any = await userDB.getById(fbUser.uid);
           console.log("Fetched profile from Firestore:", profile);
           
           const role: Role = (profile && (profile.role as Role)) || MOCK_USER_ROLES[fbUser.uid] || "student";
@@ -52,6 +54,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             email: fbUser.email,
             name: (profile && profile.name) || fbUser.displayName || null,
             role,
+            college: profile?.college || null,
+            organizerCollege: profile?.organizerCollege || null,
           });
         } catch (err) {
           console.error("Error fetching profile:", err);

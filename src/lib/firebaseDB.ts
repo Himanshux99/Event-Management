@@ -26,6 +26,8 @@ export const COLLECTIONS = {
   ATTENDANCE: 'attendance',
   TEAMS: 'teams',
   EVENT_UPDATES: 'eventUpdates',
+  COLLEGES: 'colleges',
+  TEAM_INVITES: 'teamInvites',
 };
 
 // Event operations
@@ -348,6 +350,50 @@ export const teamDB = {
       currentRound,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
+// College operations
+export const collegeDB = {
+  // Get all colleges
+  getAll: async () => {
+    const collegesRef = collection(db, COLLECTIONS.COLLEGES);
+    const querySnapshot = await getDocs(collegesRef);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  },
+
+  // Add a new college
+  create: async (collegeName: string) => {
+    const collegesRef = collection(db, COLLECTIONS.COLLEGES);
+    const docRef = await addDoc(collegesRef, {
+      name: collegeName,
+      createdAt: Timestamp.now(),
+    });
+    return docRef.id;
+  },
+
+  // Get college by name
+  getByName: async (collegeName: string) => {
+    const collegesRef = collection(db, COLLECTIONS.COLLEGES);
+    const q = query(collegesRef, where('name', '==', collegeName));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
+    }
+    return null;
+  },
+};
+
+// Team invites operations
+export const teamInvitesDB = {
+  // Create a team invite
+  create: async (inviteData: any) => {
+    const invitesRef = collection(db, COLLECTIONS.TEAM_INVITES);
+    const docRef = await addDoc(invitesRef, {
+      ...inviteData,
+      createdAt: Timestamp.now(),
     });
     return docRef.id;
   },
@@ -446,6 +492,56 @@ export const eventUpdatesDB = {
       return bAt - aAt;
     });
     return list;
+  // Get pending invites for a user
+  getPendingByUserId: async (userId: string) => {
+    const invitesRef = collection(db, COLLECTIONS.TEAM_INVITES);
+    const q = query(
+      invitesRef, 
+      where('toUserId', '==', userId),
+      where('status', '==', 'pending')
+    );
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  },
+
+  // Get all invites for a user (including accepted/rejected)
+  getAllByUserId: async (userId: string) => {
+    const invitesRef = collection(db, COLLECTIONS.TEAM_INVITES);
+    const q = query(invitesRef, where('toUserId', '==', userId));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  },
+
+  // Get invites for an event
+  getByEventId: async (eventId: string) => {
+    const invitesRef = collection(db, COLLECTIONS.TEAM_INVITES);
+    const q = query(invitesRef, where('eventId', '==', eventId));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  },
+
+  // Update invite status (accept/reject)
+  updateStatus: async (inviteId: string, status: string) => {
+    const inviteRef = doc(db, COLLECTIONS.TEAM_INVITES, inviteId);
+    await updateDoc(inviteRef, { status, updatedAt: Timestamp.now() });
+  },
+
+  // Delete an invite
+  delete: async (inviteId: string) => {
+    const inviteRef = doc(db, COLLECTIONS.TEAM_INVITES, inviteId);
+    await deleteDoc(inviteRef);
   },
 };
 
