@@ -7,24 +7,48 @@ import { NeuInput } from "@/components/ui/NeuInput";
 import { motion } from "framer-motion";
 import { Mail, Lock, ArrowRight, Calendar } from "lucide-react";
 import { toast } from "sonner";
-
+import { loginUser } from "../lib/firebaseAuth";
+import { useNavigate } from "react-router-dom";
+import { FirebaseError } from "firebase/app";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Mock login
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await loginUser(email, password);
       toast.success("Login successful!", {
         description: "Welcome back to CampusHub!",
       });
-    }, 1500);
-  };
+      // Use replace so the login page is removed from history
+      navigate("/", { replace: true }); 
+    } catch (error) {
+      
+      // Better error handling for users
+      let message = "An unexpected error occurred.";
+      if (error instanceof FirebaseError) {
+        switch (error.code) {
+          case 'auth/invalid-credential':
+            message = "Invalid email or password.";
+            break;
+          case 'auth/user-not-found':
+            message = "No account found with this email.";
+            break;
+          case 'auth/too-many-requests':
+            message = "Too many failed attempts. Try again later.";
+            break;
+        }
+      }
+      toast.error(message); 
+    } finally {
+      setIsLoading(false);
+    }
+};
 
   const handleGoogleLogin = () => {
     toast.info("Google login coming soon!", {
@@ -61,7 +85,7 @@ export default function Login() {
                     type="email"
                     placeholder="you@college.edu"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value.toLocaleLowerCase())}
                     className="pl-12"
                     required
                   />

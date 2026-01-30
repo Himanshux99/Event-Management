@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Calendar, User, LogIn } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, Calendar, User, LogIn, LogOut } from "lucide-react";
 import { NeuButton } from "@/components/ui/NeuButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-
+import { useAuth } from "@/context/authContext";
+import { auth } from "@/lib/firebase";
+import{logoutUser} from"@/lib/firebaseAuth";
 const navLinks = [
   { href: "/events", label: "Events" },
   { href: "/my-events", label: "My Events" },
@@ -14,6 +16,17 @@ const navLinks = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b-[3px] border-foreground">
@@ -43,18 +56,27 @@ export function Header() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/login">
-              <NeuButton variant="outline" size="sm">
-                <LogIn className="w-4 h-4" />
-                Login
+            {user ? (
+              <NeuButton variant="destructive" size="sm" onClick={handleLogout}>
+                <LogOut className="w-4 h-4" />
+                Logout
               </NeuButton>
-            </Link>
-            <Link to="/register">
-              <NeuButton variant="secondary" size="sm">
-                <User className="w-4 h-4" />
-                Sign Up
-              </NeuButton>
-            </Link>
+            ) : (
+              <>
+                <Link to="/login">
+                  <NeuButton variant="outline" size="sm">
+                    <LogIn className="w-4 h-4" />
+                    Login
+                  </NeuButton>
+                </Link>
+                <Link to="/register">
+                  <NeuButton variant="secondary" size="sm">
+                    <User className="w-4 h-4" />
+                    Sign Up
+                  </NeuButton>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -96,16 +118,32 @@ export function Header() {
                 </Link>
               ))}
               <div className="flex gap-2 pt-4 border-t-[3px] border-foreground mt-2">
-                <Link to="/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
-                  <NeuButton variant="outline" className="w-full">
-                    Login
+                {user ? (
+                  <NeuButton
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
                   </NeuButton>
-                </Link>
-                <Link to="/register" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
-                  <NeuButton variant="secondary" className="w-full">
-                    Sign Up
-                  </NeuButton>
-                </Link>
+                ) : (
+                  <>
+                    <Link to="/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                      <NeuButton variant="outline" className="w-full">
+                        Login
+                      </NeuButton>
+                    </Link>
+                    <Link to="/register" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                      <NeuButton variant="secondary" className="w-full">
+                        Sign Up
+                      </NeuButton>
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </motion.div>

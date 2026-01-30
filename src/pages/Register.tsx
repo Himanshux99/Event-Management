@@ -7,6 +7,9 @@ import { NeuInput } from "@/components/ui/NeuInput";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, BookOpen, Calendar, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { create } from "domain";
+import { createUser} from "../lib/firebaseAuth";
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -20,7 +23,7 @@ export default function Register() {
     confirmPassword: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-
+  const navigate = useNavigate();
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -35,13 +38,15 @@ export default function Register() {
 
     setIsLoading(true);
     
-    // Mock registration
-    setTimeout(() => {
+    try {
+      await createUser(formData.email, formData.password);
+      toast.success("Registration successful!");
+      navigate("/login");
+    } catch (error) {
+      toast.error("Registration failed. Please try again.");      
+    } finally {
       setIsLoading(false);
-      toast.success("Account created!", {
-        description: "Welcome to CampusHub! Please verify your email.",
-      });
-    }, 1500);
+    }
   };
 
   const handleGoogleSignup = () => {
