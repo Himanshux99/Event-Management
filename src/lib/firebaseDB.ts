@@ -22,6 +22,7 @@ export const COLLECTIONS = {
   REGISTRATIONS: 'registrations',
   USERS: 'users',
   ORGANIZERS: 'organizers',
+  ATTENDANCE: 'attendance',
 };
 
 // Event operations
@@ -192,9 +193,104 @@ export const userDB = {
     const userSnap = await getDoc(userRef);
     
     if (userSnap.exists()) {
-      return { id: userSnap.id, ...userSnap.data() };
+      return { id: userSnap.id, ...userSnap.data() } as any;
     }
     return null;
+  },
+};
+
+// Attendance operations (Firestore-based)
+interface AttendanceRecord {
+  eventId: string;
+  userId: string;
+  checkedInAt: Timestamp;
+}
+
+export const attendanceDB = {
+  // Check in a user for an event
+  checkIn: async (userId: string, eventId: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      // Check if user already checked in
+      const alreadyChecked = await attendanceDB.isAlreadyChecked(userId, eventId);
+      if (alreadyChecked) {
+        return { success: false, message: 'ALREADY_USED' };
+      }
+
+      // Verify event exists
+      const event = await eventDB.getById(eventId);
+      if (!event) {
+        return { success: false, message: 'INVALID' };
+      }
+
+      // Verify user exists
+      const user = await userDB.getById(userId);
+      if (!user) {
+        return { success: false, message: 'INVALID' };
+      }
+
+      // Create attendance record
+      const attendanceRef = collection(db, COLLECTIONS.ATTENDANCE);
+      await addDoc(attendanceRef, {
+        eventId,
+        userId,
+        checkedInAt: Timestamp.now(),
+      } as AttendanceRecord);
+
+      return { success: true, message: 'SUCCESS' };
+    } catch (error) {
+      console.error('Error during check-in:', error);
+      return { success: false, message: 'ERROR' };
+    }
+  },
+
+  // Check if user already checked in for an event
+  isAlreadyChecked: async (userId: string, eventId: string): Promise<boolean> => {
+    try {
+      const attendanceRef = collection(db, COLLECTIONS.ATTENDANCE);
+      const q = query(
+        attendanceRef,
+        where('userId', '==', userId),
+        where('eventId', '==', eventId)
+      );
+      const querySnapshot = await getDocs(q);
+      return !querySnapshot.empty;
+    } catch (error) {
+      console.error('Error checking attendance:', error);
+      return false;
+    }
+  },
+
+  // Get attendance count for an event
+  getCountByEvent: async (eventId: string): Promise<number> => {
+    try {
+      const attendanceRef = collection(db, COLLECTIONS.ATTENDANCE);
+      const q = query(attendanceRef, where('eventId', '==', eventId));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.size;
+    } catch (error) {
+      console.error('Error getting attendance count:', error);
+      return 0;
+    }
+  },
+
+  // Get all attendance records for an event
+  getByEventId: async (eventId: string): Promise<(AttendanceRecord & { id: string })[]> => {
+    try {
+      const attendanceRef = collection(db, COLLECTIONS.ATTENDANCE);
+      const q = query(
+        attendanceRef,
+        where('eventId', '==', eventId),
+        orderBy('checkedInAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      } as AttendanceRecord & { id: string }));
+    } catch (error) {
+      console.error('Error getting attendance records:', error);
+      return [];
+    }
   },
 };
 

@@ -45,22 +45,22 @@ const handleSeedData = async () => {
 };
 
 export default function OrganizerDashboard() {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [events, setEvents] = useState<any[]>([]);
   const [draftEvents, setDraftEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrganizerEvents = async () => {
-      if (!user) return;
+      if (!currentUser) return;
       
       try {
         setLoading(true);
         const publishedEvents = await eventDB.getByQuery([
-          where('organizerId', '==', user.uid),
+          where('organizerId', '==', currentUser.uid),
           where('status', '!=', 'draft')
         ]);
-        const drafts = await eventDB.getDrafts(user.uid);
+        const drafts = await eventDB.getDrafts(currentUser.uid);
         setEvents(publishedEvents);
         setDraftEvents(drafts);
       } catch (error) {
@@ -72,7 +72,7 @@ export default function OrganizerDashboard() {
     };
 
     fetchOrganizerEvents();
-  }, [user]);
+  }, [currentUser]);
 
   const handleDeleteDraft = async (draftId: string) => {
     if (confirm("Are you sure you want to delete this draft?")) {
@@ -94,7 +94,7 @@ export default function OrganizerDashboard() {
       
       // Refresh events
       const publishedEvents = await eventDB.getByQuery([
-        where('organizerId', '==', user.uid),
+        where('organizerId', '==', currentUser.uid),
         where('status', '!=', 'draft')
       ]);
       setEvents(publishedEvents);
@@ -336,7 +336,7 @@ export default function OrganizerDashboard() {
                                   <Eye className="w-4 h-4" />
                                 </NeuButton>
                               </Link>
-                              <Link to={`/organizer/events/${event.id}/scan`}>
+                              <Link to={`/organizer/attendance?eventId=${event.id}`}>
                                 <NeuButton variant="primary" size="sm">
                                   <QrCode className="w-4 h-4" />
                                 </NeuButton>
@@ -395,7 +395,7 @@ export default function OrganizerDashboard() {
                             <Eye className="w-4 h-4" />
                           </NeuButton>
                         </Link>
-                        <Link to={`/organizer/events/${event.id}/scan`} className="flex-1">
+                        <Link to={`/organizer/attendance?eventId=${event.id}`} className="flex-1">
                           <NeuButton variant="primary" size="sm" className="w-full">
                             <QrCode className="w-4 h-4" />
                           </NeuButton>
@@ -426,15 +426,17 @@ export default function OrganizerDashboard() {
             </div>
           </NeuCard>
 
-          <NeuCard className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-secondary border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center">
-              <QrCode className="w-6 h-6 text-secondary-foreground" />
-            </div>
-            <div>
-              <p className="font-bold">Start Scanning</p>
-              <p className="text-sm text-muted-foreground">Check-in attendees</p>
-            </div>
-          </NeuCard>
+          <Link to="/organizer/attendance" className="block">
+            <NeuCard className="flex items-center gap-4 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="w-12 h-12 bg-secondary border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center">
+                <QrCode className="w-6 h-6 text-secondary-foreground" />
+              </div>
+              <div>
+                <p className="font-bold">Start Scanning</p>
+                <p className="text-sm text-muted-foreground">Check-in attendees</p>
+              </div>
+            </NeuCard>
+          </Link>
 
           <NeuCard className="flex items-center gap-4">
             <div className="w-12 h-12 bg-accent border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center">
