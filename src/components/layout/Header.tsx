@@ -7,9 +7,6 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/authContext";
 import { auth } from "@/lib/firebase";
 import{logoutUser} from"@/lib/firebaseAuth";
-import React from 'react';
-import ThemeToggle from '../ThemeToggle';
-
 const navLinks = [
   { href: "/events", label: "Events" },
   { href: "/my-events", label: "My Events" },
@@ -19,17 +16,41 @@ const navLinks = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { user } = useAuth();
+  const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      await logoutUser();
+      await logout();
       navigate("/login");
     } catch (error) {
       console.error("Logout error:", error);
     }
   };
+
+  const role: Role | undefined = currentUser?.role;
+
+  const navLinks = (() => {
+    // default public links
+    const base = [{ href: "/events", label: "Events" }];
+    if (!currentUser) return base;
+
+    switch (role) {
+      case "student":
+        return [
+          ...base,
+          { href: "/my-events", label: "My Events" },
+        ];
+      case "organizer":
+        return [
+          ...base,
+          { href: "/organizer", label: "Organizer" },
+          { href: "/organizer/create-event", label: "Create Event" },
+        ];
+      default:
+        return base;
+    }
+  })();
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b-[1px] border-foreground">
@@ -59,9 +80,8 @@ export function Header() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <ThemeToggle />
             {user ? (
-              <NeuButton variant="destructive" size="icon" onClick={handleLogout} title="Logout">
+              <NeuButton variant="destructive" size="sm" onClick={handleLogout}>
                 <LogOut className="w-4 h-4" />
               </NeuButton>
             ) : (
@@ -120,10 +140,7 @@ export function Header() {
                   </div>
                 </Link>
               ))}
-              <div className="flex flex-col gap-2 pt-4 border-t-[1px] border-foreground mt-2">
-                <div className="flex justify-center mb-2">
-                  <ThemeToggle />
-                </div>
+              <div className="flex gap-2 pt-4 border-t-[3px] border-foreground mt-2">
                 {user ? (
                   <NeuButton
                     variant="outline"

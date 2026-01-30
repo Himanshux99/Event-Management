@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { NeuButton } from "@/components/ui/NeuButton";
@@ -19,7 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import {
   CalendarIcon,
   Clock,
@@ -32,10 +32,20 @@ import {
   MapPin,
   Save,
   Send,
+  Loader,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-import { addEvent } from "@/data/eventsData";
+import { eventDB } from "@/lib/firebaseDB";
+import { useAuth } from "@/context/authContext";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
+interface EventCreationProps {
+  initialData?: any;
+  draftId?: string;
+  isEditingDraft?: boolean;
+}
 
 const eventTypes = ["Technical", "Cultural", "Sports", "Workshop"];
 const venues = [
@@ -49,45 +59,177 @@ const years = ["1st Year", "2nd Year", "3rd Year", "4th Year", "All Years"];
 const branches = ["CSE", "ECE", "EEE", "Mechanical", "Civil", "All Branches"];
 const colleges = ["Host College Only", "Partner Colleges", "All Colleges"];
 
-const EventCreation = () => {
+const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationProps) => {
   const navigate = useNavigate();
-  const [eventTitle, setEventTitle] = useState("");
-  const [eventType, setEventType] = useState("");
-  const [isInterCollege, setIsInterCollege] = useState(false);
-  const [date, setDate] = useState<Date>();
-  const [time, setTime] = useState("");
-  const [venue, setVenue] = useState("");
-  const [isTeamEvent, setIsTeamEvent] = useState(false);
-  const [minTeamSize, setMinTeamSize] = useState("2");
-  const [maxTeamSize, setMaxTeamSize] = useState("4");
-  const [maxRegistrations, setMaxRegistrations] = useState("");
-  const [numberOfRounds, setNumberOfRounds] = useState("1");
-  const [eligibleYear, setEligibleYear] = useState("");
-  const [eligibleBranch, setEligibleBranch] = useState("");
-  const [eligibleCollege, setEligibleCollege] = useState("");
-  const [prize1st, setPrize1st] = useState("");
-  const [prize2nd, setPrize2nd] = useState("");
-  const [prize3rd, setPrize3rd] = useState("");
+  const authContext = useAuth();
+  const user = authContext?.currentUser;
+
+  const initialDate = initialData?.date
+    ? parse(initialData.date, "MMM d, yyyy", new Date())
+    : undefined;
+
+  const [eventTitle, setEventTitle] = useState(initialData?.title || "");
+  const [eventType, setEventType] = useState(initialData?.category?.toLowerCase() || "");
+  const [isInterCollege, setIsInterCollege] = useState(initialData?.type === "inter-college");
+  const [date, setDate] = useState<Date | undefined>(initialDate);
+  const [time, setTime] = useState(initialData?.time || "");
+  const [venue, setVenue] = useState(initialData?.venue || "");
+  const [isTeamEvent, setIsTeamEvent] = useState(!!initialData?.isTeamEvent);
+  const [minTeamSize, setMinTeamSize] = useState(String(initialData?.minTeamSize || "2"));
+  const [maxTeamSize, setMaxTeamSize] = useState(String(initialData?.maxTeamSize || "4"));
+  const [maxRegistrations, setMaxRegistrations] = useState(String(initialData?.maxCapacity || ""));
+  const [numberOfRounds, setNumberOfRounds] = useState(String(initialData?.rounds || "1"));
+  const [eligibleYear, setEligibleYear] = useState(initialData?.eligibility?.year || "");
+  const [eligibleBranch, setEligibleBranch] = useState(initialData?.eligibility?.branch || "");
+  const [eligibleCollege, setEligibleCollege] = useState(initialData?.eligibility?.college || "");
+  const [prize1st, setPrize1st] = useState(initialData?.prizes?.first || "");
+  const [prize2nd, setPrize2nd] = useState(initialData?.prizes?.second || "");
+  const [prize3rd, setPrize3rd] = useState(initialData?.prizes?.third || "");
   const [rulebookFile, setRulebookFile] = useState<File | null>(null);
-  const [description, setDescription] = useState("");
-  const [guidelines, setGuidelines] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
-  const [coverImage, setCoverImage] = useState<string | null>(null);
-  const [startTime, setStartTime] = useState("");
-  const [duration, setDuration] = useState("60");
+  const [description, setDescription] = useState(initialData?.description || "");
+  const [guidelines, setGuidelines] = useState(initialData?.guidelines || "");
+  const [contactName, setContactName] = useState(initialData?.contact?.name || "");
+  const [contactEmail, setContactEmail] = useState(initialData?.contact?.email || "");
+  const [contactPhone, setContactPhone] = useState(initialData?.contact?.phone || "");
+  const [coverImage, setCoverImage] = useState<string | null>(initialData?.coverImage || null);
+  const [startTime, setStartTime] = useState(initialData?.startTime || "");
+  const [duration, setDuration] = useState(String(initialData?.duration || "60"));
+  const [loading, setLoading] = useState(false);
+  const [volunteers, setVolunteers] = useState<string[]>(
+    Array.isArray(initialData?.volunteers) ? initialData.volunteers : []
+  );
+  const [userSearch, setUserSearch] = useState("");
+  const [allUserEmails, setAllUserEmails] = useState<string[]>([]);
 
   const selectedVenue = venues.find((v) => v.id === venue);
 
-  const handleSaveDraft = () => {
-    toast({
-      title: "Draft Saved",
-      description: "Your event has been saved as a draft.",
-    });
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "users"));
+        const emails = snapshot.docs
+          .map((doc) => doc.data()?.email as string | undefined)
+          .filter(Boolean) as string[];
+        setAllUserEmails(emails);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const filteredUsers = userSearch
+    ? allUserEmails
+        .filter(
+          (email) =>
+            email.toLowerCase().includes(userSearch.toLowerCase()) &&
+            !volunteers.includes(email)
+        )
+        .slice(0, 8)
+    : [];
+
+  const addVolunteer = (email: string) => {
+    if (!email) return;
+    if (volunteers.includes(email)) return;
+    setVolunteers([...volunteers, email]);
+    setUserSearch("");
   };
 
-  const handlePublish = () => {
+  const removeVolunteer = (email: string) => {
+    setVolunteers(volunteers.filter((v) => v !== email));
+  };
+
+  const handleSaveDraft = async () => {
+    if (!eventTitle) {
+      toast({
+        title: "Missing Event Title",
+        description: "Please enter an event title to save as draft.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to save drafts.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const draftEvent = {
+        title: eventTitle,
+        type: isInterCollege ? "inter-college" : "intra-college",
+        category: eventType ? eventType.charAt(0).toUpperCase() + eventType.slice(1) : "",
+        date: date ? format(date, "MMM d, yyyy") : "",
+        time: time,
+        startTime: startTime,
+        duration: parseInt(duration) || 60,
+        venue: selectedVenue?.name || venue,
+        maxCapacity: parseInt(maxRegistrations) || 100,
+        registeredCount: initialData?.registeredCount || 0,
+        isTeamEvent: isTeamEvent,
+        minTeamSize: isTeamEvent ? parseInt(minTeamSize) : null,
+        maxTeamSize: isTeamEvent ? parseInt(maxTeamSize) : null,
+        rounds: parseInt(numberOfRounds) || 1,
+        description: description,
+        guidelines: guidelines,
+        eligibility: {
+          year: eligibleYear,
+          branch: eligibleBranch,
+          college: eligibleCollege,
+        },
+        prizes: {
+          first: prize1st,
+          second: prize2nd,
+          third: prize3rd,
+        },
+        contact: {
+          name: contactName,
+          email: contactEmail,
+          phone: contactPhone,
+        },
+        volunteers,
+        coverImage: coverImage,
+        organizerId: user.uid,
+        organizerEmail: user.email,
+        status: 'draft',
+      };
+
+      if (isEditingDraft && draftId) {
+        // Update existing draft
+        await eventDB.update(draftId, draftEvent);
+        toast({
+          title: "Draft Updated",
+          description: "Your event draft has been updated successfully.",
+        });
+      } else {
+        // Create new draft
+        await eventDB.create(draftEvent);
+        toast({
+          title: "Draft Saved",
+          description: "Your event has been saved as a draft. You can continue editing later.",
+        });
+      }
+
+      navigate("/organizer");
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save draft. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePublish = async () => {
     if (!eventTitle || !eventType || !date || !venue) {
       toast({
         title: "Missing Fields",
@@ -97,42 +239,75 @@ const EventCreation = () => {
       return;
     }
 
-    // Create event object from form data
-    const newEvent = {
-      title: eventTitle,
-      type: isInterCollege ? "inter-college" : "intra-college",
-      category: eventType.charAt(0).toUpperCase() + eventType.slice(1),
-      date: format(date, "MMM d, yyyy"),
-      time: time,
-      startTime: startTime,
-      duration: parseInt(duration) || 60,
-      venue: selectedVenue?.name || venue,
-      maxCapacity: parseInt(maxRegistrations) || 100,
-      isTeamEvent: isTeamEvent,
-      minTeamSize: isTeamEvent ? parseInt(minTeamSize) : null,
-      maxTeamSize: isTeamEvent ? parseInt(maxTeamSize) : null,
-      rounds: parseInt(numberOfRounds) || 1,
-      description: description,
-      guidelines: guidelines,
-      contact: {
-        name: contactName,
-        email: contactEmail,
-        phone: contactPhone,
-      },
-      coverImage: coverImage,
-    };
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to create an event.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Add event to mock data
-    addEvent(newEvent);
+    try {
+      setLoading(true);
 
-    // Show success message
-    toast({
-      title: "Event Published!",
-      description: "Your event is now live and visible to participants.",
-    });
+      const newEvent = {
+        title: eventTitle,
+        type: isInterCollege ? "inter-college" : "intra-college",
+        category: eventType.charAt(0).toUpperCase() + eventType.slice(1),
+        date: format(date, "MMM d, yyyy"),
+        time: time,
+        startTime: startTime,
+        duration: parseInt(duration) || 60,
+        venue: selectedVenue?.name || venue,
+        maxCapacity: parseInt(maxRegistrations) || 100,
+        registeredCount: 0,
+        isTeamEvent: isTeamEvent,
+        minTeamSize: isTeamEvent ? parseInt(minTeamSize) : null,
+        maxTeamSize: isTeamEvent ? parseInt(maxTeamSize) : null,
+        rounds: parseInt(numberOfRounds) || 1,
+        description: description,
+        guidelines: guidelines,
+        eligibility: {
+          year: eligibleYear,
+          branch: eligibleBranch,
+          college: eligibleCollege,
+        },
+        prizes: {
+          first: prize1st,
+          second: prize2nd,
+          third: prize3rd,
+        },
+        contact: {
+          name: contactName,
+          email: contactEmail,
+          phone: contactPhone,
+        },
+        volunteers,
+        coverImage: coverImage,
+        organizerId: user.uid,
+        organizerEmail: user.email,
+        status: 'published',
+      };
 
-    // Redirect to Events page
-    navigate("/events");
+      await eventDB.create(newEvent);
+
+      toast({
+        title: "Event Published!",
+        description: "Your event is now live and visible to participants.",
+      });
+
+      navigate("/events");
+    } catch (error) {
+      console.error("Error creating event:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create event. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,10 +343,12 @@ const EventCreation = () => {
           {/* Page Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-foreground mb-2">
-              Create New Event
+              {isEditingDraft ? "Edit Event Draft" : "Create New Event"}
             </h1>
             <p className="text-muted-foreground text-lg">
-              Fill in the details to create and publish your campus event
+              {isEditingDraft 
+                ? "Continue editing your event draft" 
+                : "Fill in the details to create and publish your campus event"}
             </p>
           </div>
 
@@ -413,7 +590,7 @@ const EventCreation = () => {
                         type="button"
                         onClick={() => setIsTeamEvent(false)}
                         className={cn(
-                          "flex-1 h-12 px-4 font-semibold border-[1px] border-foreground rounded-[12px] transition-all flex items-center justify-center gap-2",
+                          "flex-1 h-12 px-4 font-semibold border-[3px] border-foreground rounded-[12px] transition-all",
                           !isTeamEvent
                             ? "bg-secondary text-secondary-foreground shadow-neu"
                             : "bg-card text-foreground hover:bg-muted"
@@ -426,7 +603,7 @@ const EventCreation = () => {
                         type="button"
                         onClick={() => setIsTeamEvent(true)}
                         className={cn(
-                          "flex-1 h-12 px-4 font-semibold border-[3px] border-foreground rounded-[12px] transition-all flex items-center justify-center gap-2",
+                          "flex-1 h-12 px-4 font-semibold border-[3px] border-foreground rounded-[12px] transition-all",
                           isTeamEvent
                             ? "bg-secondary text-secondary-foreground shadow-neu"
                             : "bg-card text-foreground hover:bg-muted"
@@ -667,6 +844,75 @@ const EventCreation = () => {
               </div>
             </NeuCard>
 
+            {/* Volunteers Card */}
+            <NeuCard variant="static">
+              <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Volunteers
+              </h2>
+
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Search user by email</Label>
+                <div className="relative">
+                  <NeuInput
+                    placeholder="Type email to search..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                  />
+                  {filteredUsers.length > 0 && (
+                    <div className="absolute z-10 mt-2 w-full bg-card border-[3px] border-foreground rounded-[12px] shadow-neu max-h-48 overflow-auto">
+                      {filteredUsers.map((email) => (
+                        <button
+                          key={email}
+                          type="button"
+                          onClick={() => addVolunteer(email)}
+                          className="w-full text-left px-4 py-2 hover:bg-muted font-medium"
+                        >
+                          {email}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <NeuInput
+                    placeholder="Add email manually"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                  />
+                  <NeuButton
+                    type="button"
+                    variant="outline"
+                    onClick={() => addVolunteer(userSearch.trim())}
+                  >
+                    Add
+                  </NeuButton>
+                </div>
+
+                {volunteers.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {volunteers.map((email) => (
+                      <NeuBadge key={email} variant="secondary">
+                        {email}
+                        <button
+                          type="button"
+                          className="ml-2 text-xs"
+                          onClick={() => removeVolunteer(email)}
+                        >
+                          ✕
+                        </button>
+                      </NeuBadge>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-sm text-muted-foreground">
+                  Volunteers can scan participant QR codes for this event.
+                </p>
+              </div>
+            </NeuCard>
+
             {/* Cover Image Card */}
             <NeuCard variant="static">
               <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
@@ -829,19 +1075,39 @@ const EventCreation = () => {
                 variant="outline"
                 size="lg"
                 onClick={handleSaveDraft}
+                disabled={loading}
                 className="flex items-center gap-2"
               >
-                <Save className="w-5 h-5" />
-                Save as Draft
+                {loading ? (
+                  <>
+                    <Loader className="w-5 h-5 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    Save as Draft
+                  </>
+                )}
               </NeuButton>
               <NeuButton
                 variant="primary"
                 size="lg"
                 onClick={handlePublish}
+                disabled={loading}
                 className="flex items-center gap-2"
               >
-                <Send className="w-5 h-5" />
-                Publish Event
+                {loading ? (
+                  <>
+                    <Loader className="w-5 h-5 animate-spin" />
+                    Publishing...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Publish Event
+                  </>
+                )}
               </NeuButton>
             </div>
           </div>
