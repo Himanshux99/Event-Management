@@ -15,7 +15,6 @@ import EventCreation from "./pages/EventCreation";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/authContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -36,7 +35,7 @@ const App = () => (
             <Route path="/my-events" element={<ProtectedRoute><MyEvents /></ProtectedRoute>} />
             <Route path="/my-events/:id/qr" element={<ProtectedRoute><QRPass /></ProtectedRoute>} />
             <Route path="/organizer" element={<ProtectedRoute><OrganizerDashboard /></ProtectedRoute>} />
-
+            <Route path="/organizer/create-event" element={<ProtectedRoute><EventCreation /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
