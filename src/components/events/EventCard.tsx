@@ -21,8 +21,6 @@ export interface EventData {
   imageUrl?: string;
   coverImage?: string;
   description?: string;
-  eventDescription?: string;
-  rounds?: any[];
 }
 
 interface EventCardProps {
@@ -152,30 +150,6 @@ export function EventCard({ event, index = 0 }: EventCardProps) {
                 {event.description}
               </div>
             )}
-
-            {/* Event Description Preview */}
-            {/* {event.eventDescription && (
-              <div className="py-2 text-sm text-muted-foreground line-clamp-2">
-                {event.eventDescription}
-              </div>
-            )} */}
-
-            {/* Rounds Preview */}
-            {/* {event.rounds && event.rounds.length > 0 && (
-              <div className="py-2 space-y-1 border-t-2 border-foreground/10 pt-2">
-                <p className="text-xs font-semibold text-foreground">Rounds:</p>
-                <div className="flex flex-wrap gap-1">
-                  {event.rounds.map((round: any, idx: number) => (
-                    <span
-                      key={idx}
-                      className="text-xs px-2 py-1 bg-primary/20 text-primary rounded"
-                    >
-                      {round.title || `Round ${idx + 1}`}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )} */}
 
             {/* Registration Status */}
             <div className="flex items-center justify-between pt-2 border-t-2 border-foreground/10">

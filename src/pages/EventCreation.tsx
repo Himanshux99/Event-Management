@@ -47,6 +47,7 @@ interface EventCreationProps {
   isEditingDraft?: boolean;
 }
 
+const eventTypes = ["Technical", "Cultural", "Sports", "Workshop"];
 const venues = [
   { id: "1", name: "Main Auditorium", hasClash: false },
   { id: "2", name: "Seminar Hall A", hasClash: true, clashEvent: "Tech Talk 2026" },
@@ -355,7 +356,6 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* LEFT COLUMN */}
             <div className="space-y-6">
-<<<<<<< HEAD
               {/* Basic Info Card */}
               <NeuCard variant="static">
                 <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
@@ -568,47 +568,17 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
                   </div>
                 </div>
               </NeuCard>
-=======
-              <BasicInfo
-                eventTitle={eventTitle}
-                setEventTitle={setEventTitle}
-                eventType={eventType}
-                setEventType={setEventType}
-                isInterCollege={isInterCollege}
-                setIsInterCollege={setIsInterCollege}
-                date={date}
-                setDate={setDate}
-                time={time}
-                setTime={setTime}
-                startTime={startTime}
-                setStartTime={setStartTime}
-                duration={duration}
-                setDuration={setDuration}
-                venue={venue}
-                setVenue={setVenue}
-                venues={venues}
-              />
->>>>>>> origin/main
             </div>
 
             {/* RIGHT COLUMN */}
             <div className="space-y-6">
-              <ParticipationSettings
-                isTeamEvent={isTeamEvent}
-                setIsTeamEvent={setIsTeamEvent}
-                minTeamSize={minTeamSize}
-                setMinTeamSize={setMinTeamSize}
-                maxTeamSize={maxTeamSize}
-                setMaxTeamSize={setMaxTeamSize}
-                maxRegistrations={maxRegistrations}
-                setMaxRegistrations={setMaxRegistrations}
-                eventDescription={eventDescription}
-                setEventDescription={setEventDescription}
-                rounds={rounds}
-                setRounds={setRounds}
-              />
+              {/* Participation Settings */}
+              <NeuCard variant="static">
+                <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Participation Settings
+                </h2>
 
-<<<<<<< HEAD
                 <div className="space-y-5">
                   {/* Individual/Team Toggle */}
                   <div className="space-y-2">
@@ -784,27 +754,18 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
                   </div>
                 </div>
               </NeuCard>
-=======
-              <EligibilityRules
-                eligibleYear={eligibleYear}
-                setEligibleYear={setEligibleYear}
-                eligibleBranch={eligibleBranch}
-                setEligibleBranch={setEligibleBranch}
-                eligibleCollege={eligibleCollege}
-                setEligibleCollege={setEligibleCollege}
-                years={years}
-                branches={branches}
-                colleges={colleges}
-              />
->>>>>>> origin/main
             </div>
           </div>
 
           {/* BOTTOM SECTION */}
           <div className="space-y-6">
-            <DescriptionEditor description={description} setDescription={setDescription} guidelines={guidelines} setGuidelines={setGuidelines} />
+            {/* Event Description Card */}
+            <NeuCard variant="static">
+              <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Event Description
+              </h2>
 
-<<<<<<< HEAD
               <div className="space-y-2">
                 <Label className="text-base font-semibold">
                   Description (Long Text)
@@ -839,13 +800,10 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
             </NeuCard>
 
             {/* Contact Information Card */}
-=======
-            {/* Event Head(s) Card */}
->>>>>>> origin/main
             <NeuCard variant="static">
               <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
                 <User className="w-5 h-5" />
-                Event Head(s)
+                Contact Information
               </h2>
 
               <div className="space-y-5">
@@ -1063,10 +1021,6 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
                     value={prize3rd}
                     onChange={(e) => setPrize3rd(e.target.value)}
                   />
-=======
-                <div>
-                  <NeuButton type="button" onClick={addEventHead} variant="primary">+ Add Event Head</NeuButton>
->>>>>>> origin/main
                 </div>
               </div>
             </NeuCard>

@@ -26,7 +26,7 @@ export function Header() {
 
   const navLinks = (() => {
     // default public links
-    const base = [];
+    const base = [{ href: "/events", label: "Events" }];
     if (!currentUser) return base;
 
     switch (role) {
