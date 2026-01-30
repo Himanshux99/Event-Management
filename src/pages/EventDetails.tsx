@@ -54,7 +54,8 @@ interface EventData {
   isTeamEvent?: boolean;
   minTeamSize?: number | null;
   maxTeamSize?: number | null;
-  rounds?: number;
+  eventDescription?: string;
+  rounds?: any[];
 }
 
 // Helper functions
@@ -309,6 +310,67 @@ export default function EventDetails(): JSX.Element {
               </NeuCard>
             )}
 
+            {/* Event Description */}
+            {event.eventDescription && (
+              <NeuCard variant="static">
+                <h2 className="text-xl font-bold mb-4">Event Description</h2>
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {event.eventDescription}
+                </p>
+              </NeuCard>
+            )}
+
+            {/* Rounds Section */}
+            {event.rounds && event.rounds.length > 0 && (
+              <NeuCard variant="static">
+                <h2 className="text-xl font-bold mb-6">Event Rounds</h2>
+                <div className="space-y-4">
+                  {event.rounds.map((round: any, index: number) => (
+                    <div
+                      key={index}
+                      className="p-4 border-[3px] border-foreground/10 rounded-[12px] space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-lg text-primary">
+                          {round.title || `Round ${index + 1}`}
+                        </h3>
+                        <span className="text-xs px-2 py-1 bg-primary/20 text-primary rounded font-medium">
+                          Round {index + 1}
+                        </span>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {round.startDate && (
+                          <div className="flex items-start gap-2 p-2 bg-muted rounded">
+                            <Calendar className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Start Date</p>
+                              <p className="font-medium">{round.startDate}</p>
+                            </div>
+                          </div>
+                        )}
+                        {round.endDate && (
+                          <div className="flex items-start gap-2 p-2 bg-muted rounded">
+                            <Calendar className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">End Date</p>
+                              <p className="font-medium">{round.endDate}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {round.description && (
+                        <div className="text-sm text-muted-foreground p-3 bg-muted rounded border-l-4 border-primary">
+                          {round.description}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </NeuCard>
+            )}
+
             {/* Guidelines */}
             {event.guidelines && (
               <NeuCard variant="static">
@@ -361,17 +423,6 @@ export default function EventDetails(): JSX.Element {
                       <p className="font-semibold">{event.maxCapacity} spots</p>
                     </div>
                   </div>
-
-                  {/* Rounds */}
-                  {event.rounds && event.rounds > 1 && (
-                    <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                      <Calendar className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Rounds</p>
-                        <p className="font-semibold">{event.rounds} round(s)</p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </NeuCard>
             )}
