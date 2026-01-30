@@ -11,6 +11,7 @@ import QRPass from "./pages/QRPass";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
+import OrganizerEventDashboard from "./pages/OrganizerEventDashboard";
 import EventCreation from "./pages/EventCreation";
 import AttendanceScanner from "./pages/AttendanceScanner";
 import AttendanceEventSelector from "./pages/AttendanceEventSelector";
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/my-events" element={<ProtectedRoute allowedRoles={["student"]}><MyEvents /></ProtectedRoute>} />
             <Route path="/my-events/:id/qr" element={<ProtectedRoute allowedRoles={["student"]}><QRPass /></ProtectedRoute>} />
             <Route path="/organizer" element={<ProtectedRoute allowedRoles={["organizer"]}><OrganizerDashboard /></ProtectedRoute>} />
+            <Route path="/organizer/event/:eventId" element={<ProtectedRoute allowedRoles={["organizer"]}><OrganizerEventDashboard /></ProtectedRoute>} />
             <Route path="/organizer/create-event" element={<ProtectedRoute allowedRoles={["organizer"]}><EventCreation /></ProtectedRoute>} />
             <Route path="/organizer/edit-draft/:draftId" element={<ProtectedRoute allowedRoles={["organizer"]}><EditDraft /></ProtectedRoute>} />
             <Route path="/organizer/attendance" element={<ProtectedRoute allowedRoles={["organizer"]}><AttendanceEventSelector /></ProtectedRoute>} />

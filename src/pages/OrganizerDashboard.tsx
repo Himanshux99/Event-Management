@@ -8,466 +8,238 @@ import { motion } from "framer-motion";
 import {
   Plus,
   Calendar,
-  Users,
-  QrCode,
-  BarChart3,
   Settings,
-  Eye,
-  Play,
-  Pause,
-  CheckCircle2,
-  Clock,
-  TrendingUp,
-  ArrowRight,
+  ChevronRight,
   Loader,
   Edit,
   Trash2,
+  Clock,
 } from "lucide-react";
 import { seedAllEvents } from "../service/seedEvents";
 import { toast } from "sonner";
 import { useAuth } from "@/context/authContext";
 import { eventDB } from "@/lib/firebaseDB";
 import { where } from "firebase/firestore";
-
-const stats = [
-  { label: "Total Events", value: "12", icon: Calendar, color: "bg-primary" },
-  { label: "Total Registrations", value: "1,234", icon: Users, color: "bg-secondary" },
-  { label: "Check-ins Today", value: "89", icon: QrCode, color: "bg-accent" },
-  { label: "Avg Attendance", value: "85%", icon: TrendingUp, color: "bg-success" },
-];
+import type { EventSummary } from "@/types/dashboard";
 
 const handleSeedData = async () => {
   try {
-    const message = await seedAllEvents();
-  } catch (error) {
+    await seedAllEvents();
+    toast.success("Demo data added.");
+  } catch {
     toast.error("Failed to add demo events.");
   }
 };
 
+function EventStatusBadge({ status }: { status: string }) {
+  const config: Record<
+    string,
+    { label: string; variant: "default" | "success" | "warning" | "destructive" | "primary" }
+  > = {
+    upcoming: { label: "Upcoming", variant: "default" },
+    "registration-open": { label: "Open", variant: "success" },
+    "registration-closed": { label: "Reg. Closed", variant: "warning" },
+    live: { label: "Live", variant: "destructive" },
+    closed: { label: "Ended", variant: "default" },
+    published: { label: "Published", variant: "success" },
+  };
+  const { label, variant } = config[status] ?? config.upcoming;
+  return <NeuBadge variant={variant} size="sm">{label}</NeuBadge>;
+}
+
 export default function OrganizerDashboard() {
   const { currentUser } = useAuth();
-  const [events, setEvents] = useState<any[]>([]);
-  const [draftEvents, setDraftEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<EventSummary[]>([]);
+  const [draftEvents, setDraftEvents] = useState<EventSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Load events from Firebase (organizer's published + drafts)
   useEffect(() => {
-    const fetchOrganizerEvents = async () => {
-      if (!currentUser) return;
-      
+    async function load() {
+      setLoading(true);
+      if (!currentUser) {
+        setEvents([]);
+        setDraftEvents([]);
+        setLoading(false);
+        return;
+      }
       try {
-        setLoading(true);
-        const publishedEvents = await eventDB.getByQuery([
-          where('organizerId', '==', currentUser.uid),
-          where('status', '!=', 'draft')
+        const published = await eventDB.getByQuery([
+          where("organizerId", "==", currentUser.uid),
+          where("status", "!=", "draft"),
         ]);
         const drafts = await eventDB.getDrafts(currentUser.uid);
-        setEvents(publishedEvents);
-        setDraftEvents(drafts);
-      } catch (error) {
-        console.error("Error fetching events:", error);
+        setEvents((published || []) as EventSummary[]);
+        setDraftEvents((drafts || []) as EventSummary[]);
+      } catch (e) {
+        console.error(e);
         toast.error("Failed to load events");
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchOrganizerEvents();
+    }
+    load();
   }, [currentUser]);
 
   const handleDeleteDraft = async (draftId: string) => {
-    if (confirm("Are you sure you want to delete this draft?")) {
-      try {
-        await eventDB.delete(draftId);
-        setDraftEvents(draftEvents.filter(d => d.id !== draftId));
-        toast.success("Draft deleted successfully");
-      } catch (error) {
-        console.error("Error deleting draft:", error);
-        toast.error("Failed to delete draft");
-      }
-    }
-  };
-
-  const handleToggleRegistration = async (eventId: string, currentStatus: string) => {
+    if (!confirm("Are you sure you want to delete this draft?")) return;
     try {
-      const newStatus = currentStatus === "registration-open" ? "registration-closed" : "registration-open";
-      await eventDB.update(eventId, { status: newStatus });
-      
-      // Refresh events
-      const publishedEvents = await eventDB.getByQuery([
-        where('organizerId', '==', currentUser.uid),
-        where('status', '!=', 'draft')
-      ]);
-      setEvents(publishedEvents);
-      
-      toast.success(
-        newStatus === "registration-open"
-          ? "Registration opened!"
-          : "Registration closed!"
-      );
-    } catch (error) {
-      console.error("Error toggling registration:", error);
-      toast.error("Failed to update registration status");
+      await eventDB.delete(draftId);
+      setDraftEvents((d) => d.filter((x) => x.id !== draftId));
+      toast.success("Draft deleted");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to delete draft");
     }
   };
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 md:py-12">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8"
-        >
-          <div>
-            <NeuBadge variant="secondary" className="mb-4">
-              <Settings className="w-4 h-4 mr-1" />
-              Organizer Dashboard
-            </NeuBadge>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">Welcome back, Organizer!</h1>
-            <p className="text-muted-foreground">
-              Manage your events, track registrations, and control check-ins
-            </p>
-          </div>
-          <NeuButton 
-            variant="primary" 
-            size="lg"
-            onClick={handleSeedData}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
-          >
-            ⚡ Add Demo Data
-          </NeuButton>
-          <Link to="/organizer/create-event">
-            <NeuButton variant="primary" size="lg">
-              <Plus className="w-5 h-5" />
-              Create Event
-            </NeuButton>
-          </Link>
-        </motion.div>
-
-        {/* Stats Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
-        >
-          {stats.map((stat, index) => (
-            <NeuCard key={index} variant="static" className="flex items-center gap-4">
-              <div className={`w-12 h-12 ${stat.color} border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center`}>
-                <stat.icon className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stat.value}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </div>
-            </NeuCard>
-          ))}
-        </motion.div>
-
-        {/* Draft Events Section */}
-        {draftEvents.length > 0 && (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-6 md:py-8">
+          {/* Header */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.15 }}
-            className="mb-8"
+            className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8"
           >
-            <NeuCard variant="static" padding="none" className="border-warning border-[3px]">
-              <div className="p-6 border-b-[3px] border-warning bg-warning/10">
-                <div className="flex items-center justify-between">
+            <div>
+              <NeuBadge variant="secondary" className="mb-2">
+                <Settings className="w-4 h-4 mr-1" />
+                Organizer Dashboard
+              </NeuBadge>
+              <h1 className="text-2xl md:text-3xl font-bold">Your events</h1>
+              <p className="text-muted-foreground text-sm md:text-base">
+                Click an event to open its dashboard (teams, check-ins, rounds)
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <NeuButton variant="outline" size="sm" onClick={handleSeedData}>
+                Add Demo Data
+              </NeuButton>
+              <Link to="/organizer/create-event">
+                <NeuButton variant="primary" size="sm">
+                  <Plus className="w-4 h-4" />
+                  Create Event
+                </NeuButton>
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Draft events */}
+          {draftEvents.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8"
+            >
+              <NeuCard variant="static" padding="none" className="border-2 border-warning">
+                <div className="p-4 border-b-2 border-warning bg-warning/10 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Clock className="w-5 h-5 text-warning" />
-                    <h2 className="text-xl font-bold">Draft Events ({draftEvents.length})</h2>
+                    <h2 className="text-lg font-bold">Draft events ({draftEvents.length})</h2>
                   </div>
-                  <p className="text-sm text-muted-foreground">Ready to continue editing</p>
                 </div>
-              </div>
-
-              <div className="p-4 space-y-3">
-                {draftEvents.map((draft) => (
-                  <motion.div
-                    key={draft.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center justify-between p-4 bg-card border-[3px] border-foreground rounded-[12px] shadow-neu-sm hover:shadow-neu transition-shadow"
-                  >
-                    <div className="flex-1">
-                      <p className="font-semibold text-foreground">{draft.title}</p>
-                      <div className="flex items-center gap-2 mt-1">
+                <div className="p-4 space-y-3">
+                  {draftEvents.map((draft) => (
+                    <div
+                      key={draft.id}
+                      className="flex items-center justify-between p-3 rounded-xl border-2 border-foreground bg-card"
+                    >
+                      <div>
+                        <p className="font-semibold">{draft.title}</p>
                         <p className="text-sm text-muted-foreground">
-                          {draft.date && draft.time ? `${draft.date} at ${draft.time}` : "No date set"}
+                          {draft.date && draft.time ? `${draft.date} · ${draft.time}` : "No date set"}
                         </p>
-                        <NeuBadge variant="warning" size="sm">Draft</NeuBadge>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Link to={`/organizer/edit-draft/${draft.id}`}>
-                        <NeuButton variant="primary" size="sm" className="flex items-center gap-2">
-                          <Edit className="w-4 h-4" />
-                          Continue Editing
-                        </NeuButton>
-                      </Link>
-                      <NeuButton
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteDraft(draft.id)}
-                        className="flex items-center gap-2 text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </NeuButton>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </NeuCard>
-          </motion.div>
-        )}
-
-        {/* Events Table */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
-          <NeuCard variant="static" padding="none">
-            <div className="p-6 border-b-[3px] border-foreground">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">Your Published Events</h2>
-                <NeuButton variant="ghost" size="sm">
-                  View All
-                  <ArrowRight className="w-4 h-4" />
-                </NeuButton>
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="p-8 flex items-center justify-center gap-2">
-                <Loader className="w-5 h-5 animate-spin" />
-                <span>Loading your events...</span>
-              </div>
-            ) : events.length === 0 ? (
-              <div className="p-8 text-center">
-                <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground mb-4">No published events yet</p>
-                <Link to="/organizer/create-event">
-                  <NeuButton variant="primary">
-                    <Plus className="w-4 h-4" />
-                    Create Your First Event
-                  </NeuButton>
-                </Link>
-              </div>
-            ) : (
-              <>
-                {/* Desktop Table */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-muted">
-                      <tr>
-                        <th className="text-left p-4 font-semibold">Event</th>
-                        <th className="text-left p-4 font-semibold">Date</th>
-                        <th className="text-left p-4 font-semibold">Status</th>
-                        <th className="text-left p-4 font-semibold">Registrations</th>
-                        <th className="text-left p-4 font-semibold">Check-ins</th>
-                        <th className="text-right p-4 font-semibold">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {events.map((event) => (
-                        <tr key={event.id} className="border-b border-foreground/10 hover:bg-muted/50 transition-colors">
-                          <td className="p-4">
-                            <div>
-                              <p className="font-semibold">{event.title}</p>
-                              <p className="text-sm text-muted-foreground">{event.venue}</p>
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <p className="text-sm">{event.date}</p>
-                            <p className="text-xs text-muted-foreground">{event.time}</p>
-                          </td>
-                          <td className="p-4">
-                            <EventStatusBadge status={event.status} />
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">{event.registeredCount || 0}</span>
-                              <span className="text-muted-foreground">/ {event.maxCapacity}</span>
-                            </div>
-                            <div className="w-24 h-2 bg-muted rounded-full mt-1 border border-foreground/20">
-                              <div
-                                className="h-full bg-primary rounded-full"
-                                style={{ width: `${((event.registeredCount || 0) / event.maxCapacity) * 100}%` }}
-                              />
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <span className="font-semibold">{Math.floor((event.registeredCount || 0) * 0.7)}</span>
-                            <span className="text-muted-foreground text-sm ml-1">
-                              ({event.registeredCount ? Math.floor(((event.registeredCount * 0.7) / event.registeredCount) * 100) : 0}%)
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center justify-end gap-2">
-                              <Link to={`/organizer/edit-draft/${event.id}`}>
-                                <NeuButton variant="outline" size="sm">
-                                  <Edit className="w-4 h-4" />
-                                </NeuButton>
-                              </Link>
-                              <NeuButton
-                                variant={event.status === "registration-open" ? "accent" : "outline"}
-                                size="sm"
-                                onClick={() => handleToggleRegistration(event.id, event.status)}
-                              >
-                                {event.status === "registration-open" ? (
-                                  <>
-                                    <Pause className="w-4 h-4" />
-                                    Close
-                                  </>
-                                ) : (
-                                  <>
-                                    <Play className="w-4 h-4" />
-                                    Open
-                                  </>
-                                )}
-                              </NeuButton>
-                              <Link to={`/events/${event.id}`}>
-                                <NeuButton variant="outline" size="sm">
-                                  <Eye className="w-4 h-4" />
-                                </NeuButton>
-                              </Link>
-                              <Link to={`/organizer/attendance?eventId=${event.id}`}>
-                                <NeuButton variant="primary" size="sm">
-                                  <QrCode className="w-4 h-4" />
-                                </NeuButton>
-                              </Link>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile Cards */}
-                <div className="md:hidden p-4 space-y-4">
-                  {events.map((event) => (
-                    <NeuCard key={event.id} variant="flat" padding="sm" className="border-2 border-foreground/20">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <p className="font-semibold">{event.title}</p>
-                          <p className="text-sm text-muted-foreground">{event.date}</p>
-                        </div>
-                        <EventStatusBadge status={event.status} />
-                      </div>
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="text-sm">
-                          <span className="font-semibold">{event.registeredCount || 0}</span>
-                          <span className="text-muted-foreground"> / {event.maxCapacity} registered</span>
-                        </div>
                       </div>
                       <div className="flex gap-2">
-                        <Link to={`/organizer/edit-draft/${event.id}`} className="flex-1">
-                          <NeuButton variant="outline" size="sm" className="w-full">
+                        <Link to={`/organizer/edit-draft/${draft.id}`}>
+                          <NeuButton variant="primary" size="sm">
                             <Edit className="w-4 h-4" />
+                            Edit
                           </NeuButton>
                         </Link>
                         <NeuButton
-                          variant={event.status === "registration-open" ? "accent" : "outline"}
+                          variant="outline"
                           size="sm"
-                          className="flex-1 flex items-center justify-center gap-1"
-                          onClick={() => handleToggleRegistration(event.id, event.status)}
+                          onClick={() => handleDeleteDraft(draft.id)}
+                          className="text-destructive"
                         >
-                          {event.status === "registration-open" ? (
-                            <>
-                              <Pause className="w-4 h-4" />
-                              Close
-                            </>
-                          ) : (
-                            <>
-                              <Play className="w-4 h-4" />
-                              Open
-                            </>
-                          )}
+                          <Trash2 className="w-4 h-4" />
                         </NeuButton>
-                        <Link to={`/events/${event.id}`} className="flex-1">
-                          <NeuButton variant="outline" size="sm" className="w-full">
-                            <Eye className="w-4 h-4" />
-                          </NeuButton>
-                        </Link>
-                        <Link to={`/organizer/attendance?eventId=${event.id}`} className="flex-1">
-                          <NeuButton variant="primary" size="sm" className="w-full">
-                            <QrCode className="w-4 h-4" />
-                          </NeuButton>
-                        </Link>
                       </div>
-                    </NeuCard>
+                    </div>
                   ))}
                 </div>
-               </>
+              </NeuCard>
+            </motion.div>
+          )}
+
+          {/* Event list - click goes to per-event dashboard */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+          >
+            <h2 className="text-lg font-bold mb-4">Published events</h2>
+            {loading ? (
+              <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
+                <Loader className="w-5 h-5 animate-spin" />
+                Loading events…
+              </div>
+            ) : events.length === 0 ? (
+              <NeuCard variant="static" className="p-8 text-center">
+                <Calendar className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                <p className="text-muted-foreground mb-4">No events yet</p>
+                <Link to="/organizer/create-event">
+                  <NeuButton variant="primary">
+                    <Plus className="w-4 h-4" />
+                    Create your first event
+                  </NeuButton>
+                </Link>
+              </NeuCard>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {events.map((event) => (
+                  <Link
+                    key={event.id}
+                    to={`/organizer/event/${event.id}`}
+                    className="block focus:outline-none focus:ring-2 focus:ring-primary rounded-2xl"
+                  >
+                    <NeuCard
+                      variant="static"
+                      className="h-full flex flex-col border-2 border-foreground hover:shadow-neu transition-shadow cursor-pointer group"
+                    >
+                      <div className="p-4 flex-1">
+                        <p className="font-bold text-lg mb-1 group-hover:text-primary transition-colors">
+                          {event.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {event.venue ?? "—"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          {event.date} {event.time}
+                        </p>
+                        <div className="flex items-center justify-between gap-2">
+                          <EventStatusBadge status={event.status ?? "upcoming"} />
+                          <span className="text-sm font-semibold">
+                            {event.registeredCount ?? 0}
+                            {event.maxCapacity != null && ` / ${event.maxCapacity}`} reg
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-4 pt-0 flex items-center justify-end gap-1 text-primary font-semibold text-sm">
+                        Open dashboard
+                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </NeuCard>
+                  </Link>
+                ))}
+              </div>
             )}
-          </NeuCard>
-        </motion.div>
-
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="mt-8 grid md:grid-cols-3 gap-4"
-        >
-          <NeuCard className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center">
-              <Plus className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <div>
-              <p className="font-bold">Create New Event</p>
-              <p className="text-sm text-muted-foreground">Start from scratch</p>
-            </div>
-          </NeuCard>
-
-          <Link to="/organizer/attendance" className="block">
-            <NeuCard className="flex items-center gap-4 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="w-12 h-12 bg-secondary border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center">
-                <QrCode className="w-6 h-6 text-secondary-foreground" />
-              </div>
-              <div>
-                <p className="font-bold">Start Scanning</p>
-                <p className="text-sm text-muted-foreground">Check-in attendees</p>
-              </div>
-            </NeuCard>
-          </Link>
-
-          <NeuCard className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center">
-              <BarChart3 className="w-6 h-6 text-accent-foreground" />
-            </div>
-            <div>
-              <p className="font-bold">View Analytics</p>
-              <p className="text-sm text-muted-foreground">Attendance reports</p>
-            </div>
-          </NeuCard>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </Layout>
-  );
-}
-
-function EventStatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; variant: "default" | "success" | "warning" | "destructive" | "primary" }> = {
-    "upcoming": { label: "Upcoming", variant: "default" },
-    "registration-open": { label: "Open", variant: "success" },
-    "registration-closed": { label: "Reg. Closed", variant: "warning" },
-    "live": { label: "Live", variant: "destructive" },
-    "closed": { label: "Ended", variant: "default" },
-    "published": { label: "Published", variant: "success" },
-  };
-
-  const { label, variant } = config[status] || config["upcoming"];
-
-  return (
-    <NeuBadge variant={variant} size="sm">
-      {label}
-    </NeuBadge>
   );
 }
