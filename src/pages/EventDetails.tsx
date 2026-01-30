@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { NeuButton } from "@/components/ui/NeuButton";
 import { NeuCard } from "@/components/ui/NeuCard";
 import { NeuBadge } from "@/components/ui/NeuBadge";
-import { getEvents } from "@/data/eventsData";
-import { mockEvents } from "@/data/mockEvents";
+import { eventDB } from "@/lib/firebaseDB";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -20,6 +19,7 @@ import {
   Mail,
   Phone,
   User,
+  Loader,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -46,7 +46,7 @@ interface EventData {
   category: string;
   registeredCount: number;
   maxCapacity: number;
-  status: "upcoming" | "registration-open" | "registration-closed" | "live" | "closed";
+  status: "upcoming" | "registration-open" | "registration-closed" | "live" | "closed" | "published";
   description?: string;
   guidelines?: string;
   contact?: Contact;
@@ -71,20 +71,49 @@ const formatDuration = (minutes?: number): string => {
   if (!minutes) return "";
   if (minutes < 60) return `${minutes} mins`;
   if (minutes === 60) return "1 hr";
-  if (minutes % 60 === 0) return `${minutes / 60} hrs`;
+  if (minutes % 66 === 0) return `${minutes / 60} hrs`;
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return `${hours}h ${mins}m`;
 };
 
 export default function EventDetails(): JSX.Element {
-  const { id } = useParams<EventParams>();
+  const { id } = useParams();
+  const [event, setEvent] = useState<EventData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [isLiked, setIsLiked] = useState<boolean>(false);
 
-  // Fetch event from eventsData and mockEvents
-  const allEvents = [...getEvents(), ...mockEvents];
-  const event = allEvents.find((e) => e.id === id) as EventData | undefined;
+  // Fetch event from Firestore
+  useEffect(() => {
+    const fetchEvent = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        const fetchedEvent = (await eventDB.getById(id)) as EventData | null;
+        setEvent(fetchedEvent);
+      } catch (error) {
+        console.error("Error fetching event:", error);
+        toast.error("Failed to load event");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvent();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen gap-2">
+          <Loader className="w-5 h-5 animate-spin" />
+          <span>Loading event...</span>
+        </div>
+      </Layout>
+    );
+  }
 
   // Not found state
   if (!event) {
@@ -155,6 +184,11 @@ export default function EventDetails(): JSX.Element {
       label: "Ended",
       variant: "default",
       description: "This event has ended",
+    },
+    published: {
+      label: "Published",
+      variant: "success",
+      description: "Event is published",
     },
   };
 

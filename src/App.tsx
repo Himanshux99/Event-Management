@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 import { AuthProvider } from "./context/authContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import EditDraft from "./pages/EditDraft";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,11 @@ const App = () => (
             {/* Protected Routes */}
             <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
             <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
+            <Route path="/my-events" element={<ProtectedRoute><MyEvents /></ProtectedRoute>} />
+            <Route path="/my-events/:id/qr" element={<ProtectedRoute><QRPass /></ProtectedRoute>} />
+            <Route path="/organizer" element={<ProtectedRoute><OrganizerDashboard /></ProtectedRoute>} />
+            <Route path="/organizer/create-event" element={<ProtectedRoute><EventCreation /></ProtectedRoute>} />
+            <Route path="/organizer/edit-draft/:draftId" element={<ProtectedRoute><EditDraft /></ProtectedRoute>} />
             <Route path="/my-events" element={<ProtectedRoute allowedRoles={["student"]}><MyEvents /></ProtectedRoute>} />
             <Route path="/my-events/:id/qr" element={<ProtectedRoute allowedRoles={["student"]}><QRPass /></ProtectedRoute>} />
             <Route path="/organizer" element={<ProtectedRoute allowedRoles={["organizer"]}><OrganizerDashboard /></ProtectedRoute>} />
