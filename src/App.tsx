@@ -11,6 +11,7 @@ import QRPass from "./pages/QRPass";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
+import EventCreation from "./pages/EventCreation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/organizer" element={<OrganizerDashboard />} />
+          <Route path="/organizer/create-event" element={<EventCreation />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

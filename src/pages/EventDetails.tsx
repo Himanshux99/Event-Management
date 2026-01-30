@@ -4,6 +4,7 @@ import { Layout } from "@/components/layout/Layout";
 import { NeuButton } from "@/components/ui/NeuButton";
 import { NeuCard } from "@/components/ui/NeuCard";
 import { NeuBadge } from "@/components/ui/NeuBadge";
+import { getEvents } from "@/data/eventsData";
 import { mockEvents } from "@/data/mockEvents";
 import { motion } from "framer-motion";
 import {
@@ -16,16 +17,76 @@ import {
   Heart,
   CheckCircle2,
   AlertCircle,
+  Mail,
+  Phone,
+  User,
 } from "lucide-react";
 import { toast } from "sonner";
 
-export default function EventDetails() {
-  const { id } = useParams<{ id: string }>();
-  const [isRegistered, setIsRegistered] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+// Type definitions
+interface EventParams {
+  id: string;
+}
 
-  const event = mockEvents.find((e) => e.id === id);
+interface Contact {
+  name: string;
+  email: string;
+  phone: string;
+}
 
+interface EventData {
+  id: string;
+  title: string;
+  date: string;
+  startTime?: string;
+  duration?: number;
+  time: string;
+  venue: string;
+  type: "inter-college" | "intra-college";
+  category: string;
+  registeredCount: number;
+  maxCapacity: number;
+  status: "upcoming" | "registration-open" | "registration-closed" | "live" | "closed";
+  description?: string;
+  guidelines?: string;
+  contact?: Contact;
+  coverImage?: string;
+  isTeamEvent?: boolean;
+  minTeamSize?: number | null;
+  maxTeamSize?: number | null;
+  rounds?: number;
+}
+
+// Helper functions
+const formatTime12Hour = (time24: string): string => {
+  if (!time24) return "";
+  const [hours, minutes] = time24.split(":");
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+};
+
+const formatDuration = (minutes?: number): string => {
+  if (!minutes) return "";
+  if (minutes < 60) return `${minutes} mins`;
+  if (minutes === 60) return "1 hr";
+  if (minutes % 60 === 0) return `${minutes / 60} hrs`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours}h ${mins}m`;
+};
+
+export default function EventDetails(): JSX.Element {
+  const { id } = useParams<EventParams>();
+  const [isRegistered, setIsRegistered] = useState<boolean>(false);
+  const [isLiked, setIsLiked] = useState<boolean>(false);
+
+  // Fetch event from eventsData and mockEvents
+  const allEvents = [...getEvents(), ...mockEvents];
+  const event = allEvents.find((e) => e.id === id) as EventData | undefined;
+
+  // Not found state
   if (!event) {
     return (
       <Layout>
@@ -34,7 +95,7 @@ export default function EventDetails() {
             <AlertCircle className="w-16 h-16 mx-auto mb-4 text-destructive" />
             <h1 className="text-2xl font-bold mb-2">Event Not Found</h1>
             <p className="text-muted-foreground mb-6">
-              The event you're looking for doesn't exist.
+              The event you're looking for doesn't exist or has been removed.
             </p>
             <Link to="/events">
               <NeuButton variant="primary">
@@ -52,7 +113,7 @@ export default function EventDetails() {
   const isFull = spotsLeft <= 0;
   const canRegister = event.status === "registration-open" && !isRegistered;
 
-  const handleRegister = () => {
+  const handleRegister = (): void => {
     if (canRegister) {
       setIsRegistered(true);
       toast.success("Successfully registered!", {
@@ -61,24 +122,47 @@ export default function EventDetails() {
     }
   };
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
+  const handleShare = async (): Promise<void> => {
+    await navigator.clipboard.writeText(window.location.href);
     toast.success("Link copied to clipboard!");
   };
 
-  const statusConfig = {
-    "upcoming": { label: "Upcoming", variant: "default" as const, description: "Registration opens soon" },
-    "registration-open": { label: "Open", variant: "success" as const, description: "Registration is open" },
-    "registration-closed": { label: "Closed", variant: "warning" as const, description: "Registration is closed" },
-    "live": { label: "Live Now", variant: "destructive" as const, description: "Event is happening now" },
-    "closed": { label: "Ended", variant: "default" as const, description: "This event has ended" },
+  const statusConfig: Record<
+    EventData["status"],
+    { label: string; variant: "default" | "success" | "warning" | "destructive"; description: string }
+  > = {
+    upcoming: {
+      label: "Upcoming",
+      variant: "default",
+      description: "Registration opens soon",
+    },
+    "registration-open": {
+      label: "Open",
+      variant: "success",
+      description: "Registration is open",
+    },
+    "registration-closed": {
+      label: "Closed",
+      variant: "warning",
+      description: "Registration is closed",
+    },
+    live: {
+      label: "Live Now",
+      variant: "destructive",
+      description: "Event is happening now",
+    },
+    closed: {
+      label: "Ended",
+      variant: "default",
+      description: "This event has ended",
+    },
   };
 
   const status = statusConfig[event.status];
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 md:py-12">
+      <div className="container mx-auto px-4 py-8 md:py-12 max-w-5xl">
         {/* Back Button */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -94,7 +178,7 @@ export default function EventDetails() {
           </Link>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
           {/* Main Content */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -102,34 +186,48 @@ export default function EventDetails() {
             transition={{ duration: 0.4 }}
             className="lg:col-span-2 space-y-6"
           >
-            {/* Hero Card */}
+            {/* Hero Card with Cover Image */}
             <NeuCard variant="static" padding="none" className="overflow-hidden">
-              {/* Event Image */}
-              <div className="h-48 md:h-64 bg-gradient-to-br from-primary/30 to-secondary/30 relative">
-                <div className="absolute top-4 left-4 flex gap-2">
-                  <NeuBadge variant={event.type === "inter-college" ? "primary" : "secondary"}>
+              {/* Cover Image / Hero Banner */}
+              <div className="relative w-full h-64 md:h-96 bg-gradient-to-br from-primary/30 to-secondary/30">
+                {event.coverImage ? (
+                  <img
+                    src={event.coverImage}
+                    alt={event.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20">
+                    <Calendar className="w-24 h-24 text-foreground/10" />
+                  </div>
+                )}
+
+                {/* Badges Overlay */}
+                <div className="absolute top-4 left-4 md:top-6 md:left-6 flex gap-2">
+                  <NeuBadge
+                    variant={event.type === "inter-college" ? "primary" : "secondary"}
+                  >
                     {event.type === "inter-college" ? "Inter-College" : "Intra-College"}
                   </NeuBadge>
-                  <NeuBadge variant={status.variant}>
-                    {status.label}
-                  </NeuBadge>
+                  <NeuBadge variant={status.variant}>{status.label}</NeuBadge>
                 </div>
-                <div className="absolute bottom-4 left-4">
+
+                <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6">
                   <NeuBadge variant="outline" size="lg">
                     {event.category}
                   </NeuBadge>
                 </div>
               </div>
 
-              <div className="p-6 md:p-8">
-                <h1 className="text-2xl md:text-3xl font-bold mb-4">
-                  {event.title}
-                </h1>
+              {/* Event Header Info */}
+              <div className="p-6 md:p-8 space-y-6">
+                <h1 className="text-3xl md:text-4xl font-bold">{event.title}</h1>
 
                 {/* Event Details Grid */}
-                <div className="grid md:grid-cols-2 gap-4 mb-6">
-                  <div className="flex items-center gap-3 p-4 bg-muted rounded-xl">
-                    <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Date */}
+                  <div className="flex items-center gap-3 p-4 bg-muted rounded-xl border-2 border-foreground/10">
+                    <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0">
                       <Calendar className="w-5 h-5 text-primary" />
                     </div>
                     <div>
@@ -138,71 +236,163 @@ export default function EventDetails() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-4 bg-muted rounded-xl">
-                    <div className="w-10 h-10 bg-secondary/20 rounded-lg flex items-center justify-center">
+                  {/* Start Time & Duration */}
+                  <div className="flex items-center gap-3 p-4 bg-muted rounded-xl border-2 border-foreground/10">
+                    <div className="w-10 h-10 bg-secondary/20 rounded-lg flex items-center justify-center flex-shrink-0">
                       <Clock className="w-5 h-5 text-secondary" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Time</p>
-                      <p className="font-semibold">{event.time}</p>
+                      <p className="text-sm text-muted-foreground">Time & Duration</p>
+                      <p className="font-semibold">
+                        {event.startTime && event.duration
+                          ? `${formatTime12Hour(event.startTime)} • ${formatDuration(event.duration)}`
+                          : event.time}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-4 bg-muted rounded-xl md:col-span-2">
-                    <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+                  {/* Venue - full width */}
+                  <div className="flex items-center gap-3 p-4 bg-muted rounded-xl border-2 border-foreground/10 md:col-span-2">
+                    <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center flex-shrink-0">
                       <MapPin className="w-5 h-5 text-accent" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm text-muted-foreground">Venue</p>
                       <p className="font-semibold">{event.venue}</p>
                     </div>
                   </div>
                 </div>
-
-                {/* Description */}
-                <div>
-                  <h2 className="text-lg font-bold mb-3">About This Event</h2>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Join us for an exciting event that brings together the best minds from across campuses. 
-                    This event promises to be an unforgettable experience with engaging activities, 
-                    networking opportunities, and amazing prizes for winners.
-                  </p>
-                </div>
               </div>
             </NeuCard>
 
-            {/* Rules & Guidelines */}
-            <NeuCard variant="static">
-              <h2 className="text-lg font-bold mb-4">Rules & Guidelines</h2>
-              <ul className="space-y-3 text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>Valid college ID required for entry</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>QR pass must be shown at the venue for check-in</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>Arrive at least 15 minutes before the event starts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>Follow the event code of conduct at all times</span>
-                </li>
-              </ul>
-            </NeuCard>
+            {/* Description */}
+            {event.description && (
+              <NeuCard variant="static">
+                <h2 className="text-xl font-bold mb-4">About This Event</h2>
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {event.description}
+                </p>
+              </NeuCard>
+            )}
+
+            {/* Guidelines */}
+            {event.guidelines && (
+              <NeuCard variant="static">
+                <h2 className="text-xl font-bold mb-4">Rules & Guidelines</h2>
+                <div className="space-y-3 text-muted-foreground">
+                  {event.guidelines.split("\n").map((guideline, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                      <span>{guideline.replace(/^[•-]\s*/, "")}</span>
+                    </div>
+                  ))}
+                </div>
+              </NeuCard>
+            )}
+
+            {/* Participation Info */}
+            {(event.isTeamEvent !== undefined || event.maxCapacity) && (
+              <NeuCard variant="static">
+                <h2 className="text-xl font-bold mb-4">Participation Details</h2>
+                <div className="space-y-4">
+                  {/* Team/Individual */}
+                  <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+                    <Users className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Participation Type</p>
+                      <p className="font-semibold">
+                        {event.isTeamEvent ? "Team Event" : "Individual"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Team Size */}
+                  {event.isTeamEvent && event.minTeamSize && event.maxTeamSize && (
+                    <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+                      <Users className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Team Size</p>
+                        <p className="font-semibold">
+                          {event.minTeamSize} - {event.maxTeamSize} members
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Max Capacity */}
+                  <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+                    <Users className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground">Max Capacity</p>
+                      <p className="font-semibold">{event.maxCapacity} spots</p>
+                    </div>
+                  </div>
+
+                  {/* Rounds */}
+                  {event.rounds && event.rounds > 1 && (
+                    <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+                      <Calendar className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Rounds</p>
+                        <p className="font-semibold">{event.rounds} round(s)</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </NeuCard>
+            )}
+
+            {/* Contact Information */}
+            {event.contact && (
+              <NeuCard variant="static">
+                <h2 className="text-xl font-bold mb-4">Contact Information</h2>
+                <div className="space-y-4">
+                  {/* Contact Name */}
+                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                    <User className="w-5 h-5 text-primary flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Organizer</p>
+                      <p className="font-semibold">{event.contact.name}</p>
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <a href={`mailto:${event.contact.email}`} className="block">
+                    <div className="flex items-center gap-3 p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+                      <Mail className="w-5 h-5 text-secondary flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Email</p>
+                        <p className="font-semibold text-blue-600 hover:underline">
+                          {event.contact.email}
+                        </p>
+                      </div>
+                    </div>
+                  </a>
+
+                  {/* Phone */}
+                  <a href={`tel:${event.contact.phone}`} className="block">
+                    <div className="flex items-center gap-3 p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+                      <Phone className="w-5 h-5 text-accent flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Phone</p>
+                        <p className="font-semibold text-blue-600 hover:underline">
+                          {event.contact.phone}
+                        </p>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              </NeuCard>
+            )}
           </motion.div>
 
-          {/* Sidebar */}
+          {/* Sidebar - Registration Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
             className="space-y-6"
           >
-            {/* Registration Card */}
             <NeuCard variant="static" className="sticky top-24">
               <div className="space-y-4">
                 {/* Capacity */}
@@ -231,8 +421,8 @@ export default function EventDetails() {
                   )}
                 </div>
 
-                {/* Status */}
-                <div className="p-3 bg-muted rounded-xl">
+                {/* Status Message */}
+                <div className="p-3 bg-muted rounded-xl border-2 border-foreground/10">
                   <p className="text-sm text-muted-foreground">{status.description}</p>
                 </div>
 
@@ -243,11 +433,7 @@ export default function EventDetails() {
                     Registered
                   </NeuButton>
                 ) : canRegister ? (
-                  <NeuButton
-                    variant="primary"
-                    className="w-full"
-                    onClick={handleRegister}
-                  >
+                  <NeuButton variant="primary" className="w-full" onClick={handleRegister}>
                     {isFull ? "Join Waitlist" : "Register Now"}
                   </NeuButton>
                 ) : (
@@ -255,20 +441,22 @@ export default function EventDetails() {
                     {event.status === "upcoming"
                       ? "Coming Soon"
                       : event.status === "closed"
-                      ? "Event Ended"
-                      : "Registration Closed"}
+                        ? "Event Ended"
+                        : "Registration Closed"}
                   </NeuButton>
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-2">
                   <NeuButton
                     variant="outline"
                     className="flex-1"
                     onClick={() => setIsLiked(!isLiked)}
                   >
                     <Heart
-                      className={`w-5 h-5 ${isLiked ? "fill-destructive text-destructive" : ""}`}
+                      className={`w-5 h-5 ${
+                        isLiked ? "fill-destructive text-destructive" : ""
+                      }`}
                     />
                     Save
                   </NeuButton>
@@ -276,20 +464,6 @@ export default function EventDetails() {
                     <Share2 className="w-5 h-5" />
                     Share
                   </NeuButton>
-                </div>
-              </div>
-            </NeuCard>
-
-            {/* Organizer Info */}
-            <NeuCard variant="static">
-              <h3 className="font-bold mb-3">Organized By</h3>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-primary rounded-full border-[3px] border-foreground flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold">CS</span>
-                </div>
-                <div>
-                  <p className="font-semibold">Computer Science Club</p>
-                  <p className="text-sm text-muted-foreground">Event Organizer</p>
                 </div>
               </div>
             </NeuCard>

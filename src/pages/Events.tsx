@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { EventCard } from "@/components/events/EventCard";
 import { NeuButton } from "@/components/ui/NeuButton";
 import { NeuCard } from "@/components/ui/NeuCard";
 import { NeuInput } from "@/components/ui/NeuInput";
 import { NeuBadge } from "@/components/ui/NeuBadge";
+import { getEvents, events as eventsData } from "@/data/eventsData";
 import { mockEvents, eventCategories } from "@/data/mockEvents";
 import { motion } from "framer-motion";
 import { Search, Filter, Calendar, Building2, School } from "lucide-react";
@@ -15,9 +16,29 @@ export default function Events() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [eventType, setEventType] = useState<EventType>("all");
+  const [displayEvents, setDisplayEvents] = useState([]);
+
+  // Initialize events from mock data and eventsData.js
+  useEffect(() => {
+    // Combine mock events with events from eventsData
+    const allEvents = [...mockEvents, ...getEvents()];
+    setDisplayEvents(allEvents);
+  }, []);
+
+  // Listen for new events added
+  useEffect(() => {
+    const handleEventAdded = () => {
+      // Refresh the events list when a new event is added
+      const allEvents = [...mockEvents, ...getEvents()];
+      setDisplayEvents(allEvents);
+    };
+
+    window.addEventListener("eventAdded", handleEventAdded);
+    return () => window.removeEventListener("eventAdded", handleEventAdded);
+  }, []);
 
   const filteredEvents = useMemo(() => {
-    return mockEvents.filter((event) => {
+    return displayEvents.filter((event) => {
       const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         event.venue.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === "All" || event.category === selectedCategory;
@@ -25,7 +46,7 @@ export default function Events() {
 
       return matchesSearch && matchesCategory && matchesType;
     });
-  }, [searchQuery, selectedCategory, eventType]);
+  }, [searchQuery, selectedCategory, eventType, displayEvents]);
 
   return (
     <Layout>
