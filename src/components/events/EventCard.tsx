@@ -17,7 +17,7 @@ export interface EventData {
   category: string;
   registeredCount: number;
   maxCapacity: number;
-  status: "upcoming" | "registration-open" | "registration-closed" | "live" | "closed";
+  status: "upcoming" | "registration-open" | "registration-closed" | "live" | "closed" | "published";
   imageUrl?: string;
   coverImage?: string;
   description?: string;
@@ -34,6 +34,7 @@ const statusConfig = {
   "registration-closed": { label: "Closed", variant: "warning" as const },
   "live": { label: "Live", variant: "destructive" as const },
   "closed": { label: "Ended", variant: "default" as const },
+  "published": { label: "Published", variant: "success" as const },
 };
 
 const typeConfig = {

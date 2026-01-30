@@ -5,10 +5,11 @@ import { NeuButton } from "@/components/ui/NeuButton";
 import { NeuCard } from "@/components/ui/NeuCard";
 import { NeuInput } from "@/components/ui/NeuInput";
 import { NeuBadge } from "@/components/ui/NeuBadge";
-import { getEvents, events as eventsData } from "@/data/eventsData";
-import { mockEvents, eventCategories } from "@/data/mockEvents";
+import { eventCategories } from "@/data/mockEvents";
+import { eventDB } from "@/lib/firebaseDB";
+import { where } from "firebase/firestore";
 import { motion } from "framer-motion";
-import { Search, Filter, Calendar, Building2, School } from "lucide-react";
+import { Search, Filter, Calendar, Building2, School, Loader } from "lucide-react";
 
 type EventType = "all" | "inter-college" | "intra-college";
 
@@ -16,25 +17,26 @@ export default function Events() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [eventType, setEventType] = useState<EventType>("all");
-  const [displayEvents, setDisplayEvents] = useState([]);
+  const [displayEvents, setDisplayEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Initialize events from mock data and eventsData.js
+  // Fetch published events from Firestore
   useEffect(() => {
-    // Combine mock events with events from eventsData
-    const allEvents = [...mockEvents, ...getEvents()];
-    setDisplayEvents(allEvents);
-  }, []);
-
-  // Listen for new events added
-  useEffect(() => {
-    const handleEventAdded = () => {
-      // Refresh the events list when a new event is added
-      const allEvents = [...mockEvents, ...getEvents()];
-      setDisplayEvents(allEvents);
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const publishedEvents = await eventDB.getByQuery([
+          where("status", "==", "published")
+        ]);
+        setDisplayEvents(publishedEvents);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    window.addEventListener("eventAdded", handleEventAdded);
-    return () => window.removeEventListener("eventAdded", handleEventAdded);
+    fetchEvents();
   }, []);
 
   const filteredEvents = useMemo(() => {
@@ -47,6 +49,17 @@ export default function Events() {
       return matchesSearch && matchesCategory && matchesType;
     });
   }, [searchQuery, selectedCategory, eventType, displayEvents]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen gap-2">
+          <Loader className="w-5 h-5 animate-spin" />
+          <span>Loading events...</span>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
