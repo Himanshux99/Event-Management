@@ -107,7 +107,7 @@ export default function EventsTable({ events, loading, onToggleRegistration }: {
                               </>
                             )}
                           </NeuButton>
-                          <Link to={`/events/${event.id}`}>
+                          <Link to={`/organizer/event/${event.id}`}>
                             <NeuButton variant="outline" size="sm">
                               <Eye className="w-4 h-4" />
                             </NeuButton>
