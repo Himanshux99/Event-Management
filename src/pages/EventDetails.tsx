@@ -4,7 +4,9 @@ import { Layout } from "@/components/layout/Layout";
 import { NeuButton } from "@/components/ui/NeuButton";
 import { NeuCard } from "@/components/ui/NeuCard";
 import { NeuBadge } from "@/components/ui/NeuBadge";
-import { eventDB } from "@/lib/firebaseDB";
+import { eventDB, registrationDB } from "@/lib/firebaseDB";
+import { useAuth } from "@/context/authContext";
+import RegistrationModal from "@/components/eventCreation/RegistrationModal";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -80,10 +82,12 @@ const formatDuration = (minutes?: number): string => {
 
 export default function EventDetails(): JSX.Element {
   const { id } = useParams();
+  const { currentUser } = useAuth();
   const [event, setEvent] = useState<EventData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [isLiked, setIsLiked] = useState<boolean>(false);
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
 
   // Fetch event from Firestore
   useEffect(() => {
@@ -104,6 +108,22 @@ export default function EventDetails(): JSX.Element {
 
     fetchEvent();
   }, [id]);
+
+  // Check if user is already registered
+  useEffect(() => {
+    const checkRegistration = async () => {
+      if (!currentUser || !id) return;
+      
+      try {
+        const registered = await registrationDB.checkRegistration(currentUser.uid, id);
+        setIsRegistered(registered);
+      } catch (error) {
+        console.error("Error checking registration:", error);
+      }
+    };
+
+    checkRegistration();
+  }, [currentUser, id]);
 
   if (loading) {
     return (
@@ -141,15 +161,14 @@ export default function EventDetails(): JSX.Element {
 
   const spotsLeft = event.maxCapacity - event.registeredCount;
   const isFull = spotsLeft <= 0;
-  const canRegister = event.status === "registration-open" && !isRegistered;
+  const canRegister = !isRegistered && !isFull && (event.status === "registration-open" || event.status === "published");
 
-  const handleRegister = (): void => {
-    if (canRegister) {
-      setIsRegistered(true);
-      toast.success("Successfully registered!", {
-        description: "Check your email for the QR pass.",
-      });
-    }
+  const handleRegistrationSuccess = () => {
+    setShowRegistrationModal(false);
+    setIsRegistered(true);
+    toast.success("Registration successful!", {
+      description: "Check your email for confirmation.",
+    });
   };
 
   const handleShare = async (): Promise<void> => {
@@ -517,17 +536,25 @@ export default function EventDetails(): JSX.Element {
                     <CheckCircle2 className="w-5 h-5" />
                     Registered
                   </NeuButton>
-                ) : canRegister ? (
-                  <NeuButton variant="primary" className="w-full" onClick={handleRegister}>
+                ) : canRegister && currentUser ? (
+                  <NeuButton 
+                    variant="primary" 
+                    className="w-full" 
+                    onClick={() => setShowRegistrationModal(true)}
+                  >
                     {isFull ? "Join Waitlist" : "Register Now"}
                   </NeuButton>
                 ) : (
                   <NeuButton variant="outline" className="w-full" disabled>
-                    {event.status === "upcoming"
-                      ? "Coming Soon"
-                      : event.status === "closed"
-                        ? "Event Ended"
-                        : "Registration Closed"}
+                    {!currentUser
+                      ? "Login to Register"
+                      : event.status === "upcoming"
+                        ? "Coming Soon"
+                        : event.status === "closed"
+                          ? "Event Ended"
+                          : isFull
+                            ? "Event Full"
+                            : "Registration Closed"}
                   </NeuButton>
                 )}
 
@@ -555,6 +582,17 @@ export default function EventDetails(): JSX.Element {
           </motion.div>
         </div>
       </div>
+
+      {/* Registration Modal */}
+      {currentUser && event && (
+        <RegistrationModal
+          isOpen={showRegistrationModal}
+          onClose={() => setShowRegistrationModal(false)}
+          event={event}
+          user={currentUser}
+          onRegistrationSuccess={handleRegistrationSuccess}
+        />
+      )}
     </Layout>
   );
 }

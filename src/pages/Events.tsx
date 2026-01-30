@@ -10,23 +10,27 @@ import { eventDB } from "@/lib/firebaseDB";
 import { where } from "firebase/firestore";
 import { motion } from "framer-motion";
 import { Search, Filter, Calendar, Building2, School, Loader } from "lucide-react";
+import { useAuth } from "@/context/authContext";
 
 type EventType = "all" | "inter-college" | "intra-college";
 
 export default function Events() {
+  const authContext = useAuth();
+  const user = authContext?.currentUser;
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [eventType, setEventType] = useState<EventType>("all");
   const [displayEvents, setDisplayEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch published events from Firestore
+  // Fetch published and open for registration events from Firestore
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
         const publishedEvents = await eventDB.getByQuery([
-          where("status", "==", "published")
+          where("status", "in", ["published", "registration-open","registration-closed"])
         ]);
         setDisplayEvents(publishedEvents);
       } catch (error) {
@@ -46,9 +50,20 @@ export default function Events() {
       const matchesCategory = selectedCategory === "All" || event.category === selectedCategory;
       const matchesType = eventType === "all" || event.type === eventType;
 
-      return matchesSearch && matchesCategory && matchesType;
+      // Filter intra-college events - only show if student is from that college
+      let matchesCollege = true;
+      if (event.type === "intra-college" && user?.role === "student") {
+        // For students, only show intra-college events from their college
+        matchesCollege = event.organizerCollege === user?.college;
+      } else if (event.type === "intra-college" && user?.role === "organizer") {
+        // For organizers, only show intra-college events from their college
+        matchesCollege = event.organizerCollege === user?.organizerCollege;
+      }
+      // If not logged in or for inter-college events, show all
+
+      return matchesSearch && matchesCategory && matchesType && matchesCollege;
     });
-  }, [searchQuery, selectedCategory, eventType, displayEvents]);
+  }, [searchQuery, selectedCategory, eventType, displayEvents, user]);
 
   if (loading) {
     return (

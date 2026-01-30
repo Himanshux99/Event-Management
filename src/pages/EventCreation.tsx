@@ -213,6 +213,7 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
         coverImage: coverImage,
         organizerId: user.uid,
         organizerEmail: user.email,
+        organizerCollege: user?.organizerCollege || "",
         status: 'draft',
       };
 
@@ -300,6 +301,7 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
         coverImage: coverImage,
         organizerId: user.uid,
         organizerEmail: user.email,
+        organizerCollege: user?.organizerCollege || "",
         status: 'published',
       };
 
