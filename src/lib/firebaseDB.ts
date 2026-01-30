@@ -299,10 +299,9 @@ export const attendanceDB = {
   },
 };
 
-// Team operations (Phase 1: core control + Phase 2: auto waitlist)
-const ACTIVE_IN_ROUND_STATUSES = ['registered', 'checked_in', 'qualified'] as const;
-
+// Team operations
 export const teamDB = {
+  // Get teams by event ID
   getByEventId: async (eventId: string) => {
     const teamsRef = collection(db, COLLECTIONS.TEAMS);
     const q = query(teamsRef, where('eventId', '==', eventId));
@@ -310,57 +309,46 @@ export const teamDB = {
     return querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
   },
 
-  update: async (teamId: string, data: Partial<Record<string, unknown>>) => {
+  // Update team fields
+  update: async (teamId: string, data: Partial<any>) => {
     const teamRef = doc(db, COLLECTIONS.TEAMS, teamId);
     await updateDoc(teamRef, { ...data, updatedAt: Timestamp.now() });
   },
 
-  /** Create team with registration logic: round capacity -> registered | waitlisted; prevent same user in multiple teams. */
-  create: async (eventId: string, data: { name: string; members: { name: string; rollNumber: string; userId: string }[] }) => {
-    const eventDoc = await eventDB.getById(eventId) as { maxTeamsPerRound?: number[] } | null;
-    const maxPerRound = eventDoc?.maxTeamsPerRound ?? [];
-    const round1Cap = maxPerRound[0] ?? 999;
+  // Promote team to next round
+  promote: async (eventId: string, teamId: string, team: { currentRound: number; status: string }) => {
+    const nextRound = team.currentRound + 1;
+    const teamRef = doc(db, COLLECTIONS.TEAMS, teamId);
+    await updateDoc(teamRef, { currentRound: nextRound, status: 'qualified', updatedAt: Timestamp.now() });
+    return { promoted: true, newRound: nextRound };
+  },
 
-    const teamsRef = collection(db, COLLECTIONS.TEAMS);
-    const q = query(teamsRef, where('eventId', '==', eventId));
-    const snapshot = await getDocs(q);
-    const teams = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as { members?: { userId?: string }[] }));
+  // Eliminate a team
+  eliminate: async (teamId: string, eventId: string) => {
+    const teamRef = doc(db, COLLECTIONS.TEAMS, teamId);
+    await updateDoc(teamRef, { status: 'eliminated', updatedAt: Timestamp.now() });
+  },
 
-    const userIds = new Set((data.members || []).map(m => m.userId).filter(Boolean));
-    for (const t of teams) {
-      for (const m of t.members || []) {
-        const uid = m.userId;
-        if (uid && userIds.has(uid)) {
-          throw new Error('User already in another team for this event');
-        }
-      }
-    }
+  // Disqualify a team
+  disqualify: async (teamId: string, eventId: string) => {
+    const teamRef = doc(db, COLLECTIONS.TEAMS, teamId);
+    await updateDoc(teamRef, { status: 'disqualified', updatedAt: Timestamp.now() });
+  },
 
-    const inRound1 = teams.filter((t: { currentRound?: number; status?: string }) =>
-      t.currentRound === 1 && ACTIVE_IN_ROUND_STATUSES.includes((t.status as string) ?? '')
-    ).length;
-    const status = inRound1 < round1Cap ? 'registered' : 'waitlisted';
-    const currentRound = 1;
+  // Move team to waitlist
+  moveToWaitlist: async (teamId: string) => {
+    const teamRef = doc(db, COLLECTIONS.TEAMS, teamId);
+    await updateDoc(teamRef, { status: 'waitlisted', updatedAt: Timestamp.now() });
+  },
+};
 
-    const docRef = await addDoc(teamsRef, {
-      eventId,
-      name: data.name,
-      members: data.members,
-      status,
-      currentRound,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
 // College operations
 export const collegeDB = {
   // Get all colleges
   getAll: async () => {
     const collegesRef = collection(db, COLLECTIONS.COLLEGES);
     const querySnapshot = await getDocs(collegesRef);
-    
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
   // Add a new college
@@ -378,7 +366,6 @@ export const collegeDB = {
     const collegesRef = collection(db, COLLECTIONS.COLLEGES);
     const q = query(collegesRef, where('name', '==', collegeName));
     const querySnapshot = await getDocs(q);
-    
     if (!querySnapshot.empty) {
       return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
     }
@@ -398,77 +385,48 @@ export const teamInvitesDB = {
     return docRef.id;
   },
 
-  /** Promote to next round: if space -> qualified; else -> waitlisted. Only for checked_in teams. */
-  promote: async (eventId: string, teamId: string, team: { currentRound: number; status: string }) => {
-    const eventDoc = await eventDB.getById(eventId) as { maxTeamsPerRound?: number[] } | null;
-    const maxPerRound = eventDoc?.maxTeamsPerRound ?? [];
-    const nextRound = team.currentRound + 1;
-    const cap = maxPerRound[nextRound - 1] ?? 999;
-
-    const teamsRef = collection(db, COLLECTIONS.TEAMS);
-    const q = query(teamsRef, where('eventId', '==', eventId));
-    const snapshot = await getDocs(q);
-    const all = snapshot.docs.map(d => d.data() as { currentRound: number; status: string });
-    const inNextRound = all.filter(t => t.currentRound === nextRound && ACTIVE_IN_ROUND_STATUSES.includes(t.status)).length;
-
-    const teamRef = doc(db, COLLECTIONS.TEAMS, teamId);
-    if (inNextRound < cap) {
-      await updateDoc(teamRef, { currentRound: nextRound, status: 'qualified', updatedAt: Timestamp.now() });
-      return { promoted: true, newRound: nextRound };
-    } else {
-      await updateDoc(teamRef, { status: 'waitlisted', updatedAt: Timestamp.now() });
-      return { promoted: false, waitlisted: true };
-    }
+  // Get pending invites for a user
+  getPendingByUserId: async (userId: string) => {
+    const invitesRef = collection(db, COLLECTIONS.TEAM_INVITES);
+    const q = query(
+      invitesRef,
+      where('toUserId', '==', userId),
+      where('status', '==', 'pending')
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
-  eliminate: async (teamId: string, eventId: string) => {
-    const teamRef = doc(db, COLLECTIONS.TEAMS, teamId);
-    const teamSnap = await getDoc(teamRef);
-    const team = teamSnap.data() as { currentRound: number } | undefined;
-    await updateDoc(teamRef, { status: 'eliminated', updatedAt: Timestamp.now() });
-    if (team?.currentRound != null) {
-      await promoteFirstWaitlistedForRound(eventId, team.currentRound);
-    }
+  // Get all invites for a user (including accepted/rejected)
+  getAllByUserId: async (userId: string) => {
+    const invitesRef = collection(db, COLLECTIONS.TEAM_INVITES);
+    const q = query(invitesRef, where('toUserId', '==', userId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
-  disqualify: async (teamId: string, eventId: string) => {
-    const teamRef = doc(db, COLLECTIONS.TEAMS, teamId);
-    const teamSnap = await getDoc(teamRef);
-    const team = teamSnap.data() as { currentRound: number } | undefined;
-    await updateDoc(teamRef, { status: 'disqualified', updatedAt: Timestamp.now() });
-    if (team?.currentRound != null) {
-      await promoteFirstWaitlistedForRound(eventId, team.currentRound);
-    }
+  // Get invites for an event
+  getByEventId: async (eventId: string) => {
+    const invitesRef = collection(db, COLLECTIONS.TEAM_INVITES);
+    const q = query(invitesRef, where('eventId', '==', eventId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
-  moveToWaitlist: async (teamId: string) => {
-    const teamRef = doc(db, COLLECTIONS.TEAMS, teamId);
-    await updateDoc(teamRef, { status: 'waitlisted', updatedAt: Timestamp.now() });
+  // Update invite status (accept/reject)
+  updateStatus: async (inviteId: string, status: string) => {
+    const inviteRef = doc(db, COLLECTIONS.TEAM_INVITES, inviteId);
+    await updateDoc(inviteRef, { status, updatedAt: Timestamp.now() });
+  },
+
+  // Delete an invite
+  delete: async (inviteId: string) => {
+    const inviteRef = doc(db, COLLECTIONS.TEAM_INVITES, inviteId);
+    await deleteDoc(inviteRef);
   },
 };
 
-/** Phase 2: Auto promote earliest waitlisted team for the given round. */
-async function promoteFirstWaitlistedForRound(eventId: string, round: number): Promise<void> {
-  const teamsRef = collection(db, COLLECTIONS.TEAMS);
-  const q = query(
-    teamsRef,
-    where('eventId', '==', eventId),
-    where('currentRound', '==', round),
-    where('status', '==', 'waitlisted')
-  );
-  const snapshot = await getDocs(q);
-  const sorted = snapshot.docs.sort((a, b) => {
-    const aAt = (a.data().createdAt as Timestamp)?.toMillis?.() ?? 0;
-    const bAt = (b.data().createdAt as Timestamp)?.toMillis?.() ?? 0;
-    return aAt - bAt;
-  });
-  const first = sorted[0];
-  if (first) {
-    await updateDoc(first.ref, { status: 'qualified', updatedAt: Timestamp.now() });
-  }
-}
-
-// Phase 2: Event updates (venue_change | announcement | delay)
+// Event updates operations
 export const eventUpdatesDB = {
   create: async (eventId: string, data: { message: string; type: 'venue_change' | 'announcement' | 'delay' }) => {
     const ref = collection(db, COLLECTIONS.EVENT_UPDATES);
@@ -492,56 +450,6 @@ export const eventUpdatesDB = {
       return bAt - aAt;
     });
     return list;
-  // Get pending invites for a user
-  getPendingByUserId: async (userId: string) => {
-    const invitesRef = collection(db, COLLECTIONS.TEAM_INVITES);
-    const q = query(
-      invitesRef, 
-      where('toUserId', '==', userId),
-      where('status', '==', 'pending')
-    );
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-  },
-
-  // Get all invites for a user (including accepted/rejected)
-  getAllByUserId: async (userId: string) => {
-    const invitesRef = collection(db, COLLECTIONS.TEAM_INVITES);
-    const q = query(invitesRef, where('toUserId', '==', userId));
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-  },
-
-  // Get invites for an event
-  getByEventId: async (eventId: string) => {
-    const invitesRef = collection(db, COLLECTIONS.TEAM_INVITES);
-    const q = query(invitesRef, where('eventId', '==', eventId));
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-  },
-
-  // Update invite status (accept/reject)
-  updateStatus: async (inviteId: string, status: string) => {
-    const inviteRef = doc(db, COLLECTIONS.TEAM_INVITES, inviteId);
-    await updateDoc(inviteRef, { status, updatedAt: Timestamp.now() });
-  },
-
-  // Delete an invite
-  delete: async (inviteId: string) => {
-    const inviteRef = doc(db, COLLECTIONS.TEAM_INVITES, inviteId);
-    await deleteDoc(inviteRef);
   },
 };
 

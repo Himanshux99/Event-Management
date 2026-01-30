@@ -114,7 +114,6 @@ export default function QRPass() {
               <div className="p-6 flex flex-col items-center bg-card">
                 <div className="bg-foreground rounded-2xl p-4 shadow-neu">
                   {qrValue ? (
-                    <QRCode
                     <QRCodeCanvas
                       value={qrValue}
                       size={280}
