@@ -61,7 +61,8 @@ const colleges = ["Host College Only", "Partner Colleges", "All Colleges"];
 
 const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const authContext = useAuth();
+  const user = authContext?.currentUser;
 
   const initialDate = initialData?.date
     ? parse(initialData.date, "MMM d, yyyy", new Date())

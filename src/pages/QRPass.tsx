@@ -17,6 +17,9 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/context/authContext";
+import { generateQRPayload } from "@/lib/qr";
+import {QRCodeCanvas} from "qrcode.react";
 
 // Mock user data
 const mockUser = {
@@ -30,6 +33,7 @@ const mockUser = {
 export default function QRPass() {
   const { id } = useParams<{ id: string }>();
   const event = mockEvents.find((e) => e.id === id);
+  const { currentUser } = useAuth();
 
   if (!event) {
     return (
@@ -64,8 +68,10 @@ export default function QRPass() {
     toast.success("Link copied to clipboard!");
   };
 
-  // Generate a mock QR code pattern (in real app, this would be a unique signed token)
-  const qrPattern = `EVT-${event.id}-USR-21CS1234-${Date.now().toString(36).toUpperCase()}`;
+  // Build QR payload (JSON string) using Firebase uid + event id
+  const qrValue = currentUser
+    ? generateQRPayload(currentUser.uid, event.id)
+    : "";
 
   return (
     <Layout hideFooter>
@@ -104,27 +110,27 @@ export default function QRPass() {
               </div>
 
               {/* QR Code */}
-              <div className="p-6 flex justify-center bg-card">
-                <div className="w-56 h-56 bg-foreground rounded-2xl border-[4px] border-foreground p-3 shadow-neu">
-                  {/* Mock QR Code Pattern */}
-                  <div className="w-full h-full bg-background rounded-lg grid grid-cols-8 grid-rows-8 gap-0.5 p-2">
-                    {Array.from({ length: 64 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`rounded-sm ${
-                          Math.random() > 0.5 ? "bg-foreground" : "bg-transparent"
-                        }`}
-                      />
-                    ))}
-                  </div>
+              <div className="p-6 flex flex-col items-center bg-card">
+                <div className="bg-foreground rounded-2xl p-4 shadow-neu">
+                  {qrValue ? (
+                    <QRCodeCanvas
+                      value={qrValue}
+                      size={280}
+                      bgColor="#ffffff"
+                      fgColor="#000000"
+                      level="H"
+                      includeMargin={true}
+                    />
+                  ) : (
+                    <div className="w-56 h-56 flex items-center justify-center text-muted-foreground">No QR</div>
+                  )}
                 </div>
-              </div>
 
-              {/* Pass ID */}
-              <div className="px-6 pb-4 text-center">
-                <p className="text-xs text-muted-foreground font-mono bg-muted px-3 py-1 rounded-full inline-block">
-                  {qrPattern}
-                </p>
+                {/* Event name + date/time below QR */}
+                <div className="mt-4 text-center">
+                  <h2 className="font-bold text-lg">{event.title}</h2>
+                  <p className="text-sm text-muted-foreground">{event.date} • {event.time}</p>
+                </div>
               </div>
 
               {/* Divider */}
