@@ -72,42 +72,51 @@
   }
 
   .dark {
-    --background: 0 0% 8%;
+    /* Dark background - deep navy blue */
+    --background: 220 30% 10%;
     --foreground: 40 33% 96%;
 
-    --card: 0 0% 12%;
+    /* Dark cards - slightly lighter navy */
+    --card: 220 25% 14%;
     --card-foreground: 40 33% 96%;
 
-    --popover: 0 0% 12%;
+    --popover: 220 25% 14%;
     --popover-foreground: 40 33% 96%;
 
-    --primary: 210 100% 55%;
-    --primary-foreground: 0 0% 0%;
+    /* Primary - Bright electric blue for dark mode */
+    --primary: 210 100% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 25 100% 55%;
-    --secondary-foreground: 0 0% 0%;
+    /* Secondary - Vibrant coral for dark mode */
+    --secondary: 15 85% 60%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 20%;
-    --muted-foreground: 40 20% 70%;
+    /* Muted - subtle blue-gray */
+    --muted: 220 20% 20%;
+    --muted-foreground: 220 10% 65%;
 
-    --accent: 50 100% 50%;
-    --accent-foreground: 0 0% 0%;
+    /* Accent - Golden yellow for dark mode */
+    --accent: 45 95% 60%;
+    --accent-foreground: 220 30% 10%;
 
-    --destructive: 8 85% 55%;
+    /* Destructive - Soft red for dark mode */
+    --destructive: 0 70% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 33% 96%;
-    --input: 40 33% 96%;
-    --ring: 210 100% 55%;
+    /* Borders - lighter cream for contrast */
+    --border: 40 33% 85%;
+    --input: 40 33% 85%;
+    --ring: 210 100% 60%;
 
-    --sidebar-background: 0 0% 8%;
+    /* Sidebar dark theme */
+    --sidebar-background: 220 30% 10%;
     --sidebar-foreground: 40 33% 96%;
-    --sidebar-primary: 210 100% 55%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 50 100% 50%;
-    --sidebar-accent-foreground: 0 0% 0%;
-    --sidebar-border: 40 33% 96%;
-    --sidebar-ring: 210 100% 55%;
+    --sidebar-primary: 210 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 45 95% 60%;
+    --sidebar-accent-foreground: 220 30% 10%;
+    --sidebar-border: 40 33% 85%;
+    --sidebar-ring: 210 100% 60%;
   }
 }
 
@@ -137,16 +146,16 @@
   /* Neubrutalism button base */
   .neu-button {
     @apply font-semibold border-[3px] border-foreground rounded-[12px] transition-all duration-150;
-    box-shadow: 3px 3px 0 0 hsl(var(--foreground));
+    box-shadow: 1px 1px 0 0 hsl(var(--foreground));
   }
 
   .neu-button:hover {
-    box-shadow: 4px 4px 0 0 hsl(var(--foreground));
+    box-shadow: 2px 2px 0 0 hsl(var(--foreground));
     transform: translate(-1px, -1px);
   }
 
   .neu-button:active {
-    box-shadow: 1px 1px 0 0 hsl(var(--foreground));
+    box-shadow: 0px 0px 0 0 hsl(var(--foreground));
     transform: translate(2px, 2px);
   }
 
@@ -209,5 +218,18 @@
 
   .neu-badge-destructive {
     @apply neu-badge bg-destructive text-destructive-foreground;
+  }
+
+  /* Shadow utilities */
+  .shadow-neu-sm {
+    box-shadow: 0px 0px 0 0 hsl(var(--foreground));
+  }
+
+  .shadow-neu {
+    box-shadow: 1px 1px 0 0 hsl(var(--foreground));
+  }
+
+  .shadow-neu-lg {
+    box-shadow: 2px 2px 0 0 hsl(var(--foreground));
   }
 }

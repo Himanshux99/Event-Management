@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Calendar, User, LogIn, LogOut } from "lucide-react";
+import { Menu, X, Calendar, User, LogIn, LogOut , FileSliders } from "lucide-react";
 import { NeuButton } from "@/components/ui/NeuButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/authContext";
 import { auth } from "@/lib/firebase";
 import{logoutUser} from"@/lib/firebaseAuth";
+import React from 'react';
+import ThemeToggle from '../ThemeToggle';
+
 const navLinks = [
   { href: "/events", label: "Events" },
   { href: "/my-events", label: "My Events" },
@@ -35,9 +38,9 @@ export function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 bg-primary border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center group-hover:shadow-neu transition-all">
-              <Calendar className="w-5 h-5 text-primary-foreground" />
+              <FileSliders className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-xl hidden sm:block">CampusHub</span>
+            <span className="font-bold text-xl hidden sm:block ">CampusHub</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -56,6 +59,7 @@ export function Header() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             {user ? (
               <NeuButton variant="destructive" size="sm" onClick={handleLogout}>
                 <LogOut className="w-4 h-4" />
@@ -117,7 +121,10 @@ export function Header() {
                   </div>
                 </Link>
               ))}
-              <div className="flex gap-2 pt-4 border-t-[3px] border-foreground mt-2">
+              <div className="flex flex-col gap-2 pt-4 border-t-[3px] border-foreground mt-2">
+                <div className="flex justify-center mb-2">
+                  <ThemeToggle />
+                </div>
                 {user ? (
                   <NeuButton
                     variant="outline"
@@ -131,7 +138,7 @@ export function Header() {
                     Logout
                   </NeuButton>
                 ) : (
-                  <>
+                  <div className="flex gap-2">
                     <Link to="/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
                       <NeuButton variant="outline" className="w-full">
                         Login
@@ -142,7 +149,7 @@ export function Header() {
                         Sign Up
                       </NeuButton>
                     </Link>
-                  </>
+                  </div>
                 )}
               </div>
             </nav>

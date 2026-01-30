@@ -40,3 +40,6 @@
 .read-the-docs {
   color: #888;
 }
+
+/* App styles - theme is now handled via Tailwind CSS classes in index.css */
+
