@@ -53,7 +53,7 @@ export default function OrganizerDashboard() {
               Manage your events, track registrations, and control check-ins
             </p>
           </div>
-          <Link to="/organizer/create">
+          <Link to="/organizer/create-event">
             <NeuButton variant="primary" size="lg">
               <Plus className="w-5 h-5" />
               Create Event

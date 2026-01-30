@@ -10,6 +10,8 @@ export interface EventData {
   title: string;
   date: string;
   time: string;
+  startTime?: string;
+  duration?: number;
   venue: string;
   type: "inter-college" | "intra-college";
   category: string;
@@ -17,6 +19,8 @@ export interface EventData {
   maxCapacity: number;
   status: "upcoming" | "registration-open" | "registration-closed" | "live" | "closed";
   imageUrl?: string;
+  coverImage?: string;
+  description?: string;
 }
 
 interface EventCardProps {
@@ -37,6 +41,27 @@ const typeConfig = {
   "intra-college": { label: "Intra-College", variant: "secondary" as const },
 };
 
+// Helper function to format time (HH:MM to HH:MM AM/PM)
+const formatTime12Hour = (time24: string): string => {
+  if (!time24) return "";
+  const [hours, minutes] = time24.split(":");
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+};
+
+// Helper function to convert minutes to readable format
+const formatDuration = (minutes?: number): string => {
+  if (!minutes) return "";
+  if (minutes < 60) return `${minutes} mins`;
+  if (minutes === 60) return "1 hr";
+  if (minutes % 60 === 0) return `${minutes / 60} hrs`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours}h ${mins}m`;
+};
+
 export function EventCard({ event, index = 0 }: EventCardProps) {
   const status = statusConfig[event.status];
   const type = typeConfig[event.type];
@@ -53,7 +78,13 @@ export function EventCard({ event, index = 0 }: EventCardProps) {
         <NeuCard className="overflow-hidden h-full group">
           {/* Event Image / Placeholder */}
           <div className="h-40 bg-gradient-to-br from-primary/20 to-secondary/20 relative overflow-hidden">
-            {event.imageUrl ? (
+            {event.coverImage ? (
+              <img
+                src={event.coverImage}
+                alt={event.title}
+                className="w-full h-full object-cover"
+              />
+            ) : event.imageUrl ? (
               <img
                 src={event.imageUrl}
                 alt={event.title}
@@ -100,13 +131,24 @@ export function EventCard({ event, index = 0 }: EventCardProps) {
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="w-4 h-4 flex-shrink-0" />
-                <span>{event.time}</span>
+                {event.startTime && event.duration ? (
+                  <span>{formatTime12Hour(event.startTime)} • {formatDuration(event.duration)}</span>
+                ) : (
+                  <span>{event.time}</span>
+                )}
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <MapPin className="w-4 h-4 flex-shrink-0" />
                 <span className="truncate">{event.venue}</span>
               </div>
             </div>
+
+            {/* Description Preview */}
+            {event.description && (
+              <div className="py-2 text-sm text-muted-foreground line-clamp-2">
+                {event.description}
+              </div>
+            )}
 
             {/* Registration Status */}
             <div className="flex items-center justify-between pt-2 border-t-2 border-foreground/10">

@@ -11,6 +11,7 @@ import QRPass from "./pages/QRPass";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
+import EventCreation from "./pages/EventCreation";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/authContext";
 import ProtectedRoute from "./components/ProtectedRoute";
