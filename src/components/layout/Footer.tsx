@@ -1,15 +1,33 @@
 import { Link } from "react-router-dom";
-import { Calendar, Heart } from "lucide-react";
+import { Calendar, Heart, Mail, Instagram } from "lucide-react";
 
 export function Footer() {
+  const organizers = [
+    {
+      name: "Raj Kumar",
+      instagram: "rajkumar_official",
+      email: "raj.kumar@campushub.com"
+    },
+    {
+      name: "Priya Sharma",
+      instagram: "priya_events",
+      email: "priya.sharma@campushub.com"
+    },
+    {
+      name: "Arjun Patel",
+      instagram: "arjun_tech",
+      email: "arjun.patel@campushub.com"
+    }
+  ];
+
   return (
-    <footer className="bg-foreground text-background border-t-[3px] border-foreground">
+    <footer className="bg-foreground text-background border-t-[1px] border-foreground">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-primary border-[3px] border-background rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-primary border-[1px] border-background rounded-xl flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="font-bold text-xl">CampusHub</span>
@@ -34,8 +52,8 @@ export function Footer() {
             <h4 className="font-bold text-lg mb-4">Support</h4>
             <ul className="space-y-2">
               <li><Link to="#" className="text-background/80 hover:text-background transition-colors">Help Center</Link></li>
-              <li><Link to="#" className="text-background/80 hover:text-background transition-colors">Contact Us</Link></li>
               <li><Link to="#" className="text-background/80 hover:text-background transition-colors">FAQs</Link></li>
+              <li><Link to="#" className="text-background/80 hover:text-background transition-colors">Report Issue</Link></li>
             </ul>
           </div>
 
@@ -47,6 +65,38 @@ export function Footer() {
               <li><Link to="#" className="text-background/80 hover:text-background transition-colors">Terms of Service</Link></li>
               <li><Link to="#" className="text-background/80 hover:text-background transition-colors">Cookie Policy</Link></li>
             </ul>
+          </div>
+
+          {/* Contact Us - Organizers */}
+          <div>
+            <h4 className="font-bold text-lg mb-4">Contact Us</h4>
+            <div className="space-y-4">
+              {organizers.map((org, index) => (
+                <div key={index} className="text-sm">
+                  <p className="font-semibold text-background mb-1">{org.name}</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Mail className="w-3 h-3" />
+                    <a 
+                      href={`mailto:${org.email}`}
+                      className="text-background/80 hover:text-background transition-colors text-xs break-all"
+                    >
+                      {org.email}
+                    </a>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Instagram className="w-3 h-3" />
+                    <a 
+                      href={`https://instagram.com/${org.instagram}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-background/80 hover:text-background transition-colors text-xs"
+                    >
+                      @{org.instagram}
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

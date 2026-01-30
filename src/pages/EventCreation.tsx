@@ -205,10 +205,10 @@ const EventCreation = () => {
                       Event Type <span className="text-destructive">*</span>
                     </Label>
                     <Select value={eventType} onValueChange={setEventType}>
-                      <SelectTrigger className="h-12 bg-card border-[3px] border-foreground rounded-[12px] shadow-neu font-medium">
+                      <SelectTrigger className="h-12 bg-card border-[1px] border-foreground rounded-[12px] shadow-neu font-medium">
                         <SelectValue placeholder="Select event type" />
                       </SelectTrigger>
-                      <SelectContent className="bg-card border-[3px] border-foreground rounded-[12px] shadow-neu z-50">
+                      <SelectContent className="bg-card border-[1px] border-foreground rounded-[12px] shadow-neu z-50">
                         {eventTypes.map((type) => (
                           <SelectItem
                             key={type}
@@ -230,7 +230,7 @@ const EventCreation = () => {
                         type="button"
                         onClick={() => setIsInterCollege(false)}
                         className={cn(
-                          "flex-1 h-12 px-4 font-semibold border-[3px] border-foreground rounded-[12px] transition-all",
+                          "flex-1 h-12 px-4 font-semibold border-[1px] border-foreground rounded-[12px] transition-all",
                           !isInterCollege
                             ? "bg-primary text-primary-foreground shadow-neu"
                             : "bg-card text-foreground hover:bg-muted"
@@ -263,7 +263,7 @@ const EventCreation = () => {
                         <PopoverTrigger asChild>
                           <button
                             className={cn(
-                              "w-full h-12 px-4 flex items-center justify-between bg-card border-[3px] border-foreground rounded-[12px] shadow-neu font-medium text-left",
+                              "w-full h-12 px-4 flex items-center justify-between bg-card border-[1px] border-foreground rounded-[12px] shadow-neu font-medium text-left",
                               !date && "text-muted-foreground"
                             )}
                           >
@@ -272,7 +272,7 @@ const EventCreation = () => {
                           </button>
                         </PopoverTrigger>
                         <PopoverContent
-                          className="w-auto p-0 bg-card border-[3px] border-foreground rounded-[12px] shadow-neu z-50"
+                          className="w-auto p-0 bg-card border-[1px] border-foreground rounded-[12px] shadow-neu z-50"
                           align="start"
                         >
                           <Calendar
@@ -372,7 +372,7 @@ const EventCreation = () => {
 
                     {/* Clash Warning */}
                     {selectedVenue?.hasClash && (
-                      <div className="flex items-center gap-3 p-3 bg-warning/20 border-[3px] border-warning rounded-[12px]">
+                      <div className="flex items-center gap-3 p-3 bg-warning/20 border-[1px] border-warning rounded-[12px]">
                         <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0" />
                         <div>
                           <p className="font-semibold text-foreground text-sm">
@@ -413,7 +413,7 @@ const EventCreation = () => {
                         type="button"
                         onClick={() => setIsTeamEvent(false)}
                         className={cn(
-                          "flex-1 h-12 px-4 font-semibold border-[3px] border-foreground rounded-[12px] transition-all flex items-center justify-center gap-2",
+                          "flex-1 h-12 px-4 font-semibold border-[1px] border-foreground rounded-[12px] transition-all flex items-center justify-center gap-2",
                           !isTeamEvent
                             ? "bg-secondary text-secondary-foreground shadow-neu"
                             : "bg-card text-foreground hover:bg-muted"
@@ -440,7 +440,7 @@ const EventCreation = () => {
 
                   {/* Team Size Fields */}
                   {isTeamEvent && (
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 border-[3px] border-foreground rounded-[12px]">
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 border-[1px] border-foreground rounded-[12px]">
                       <div className="space-y-2">
                         <Label className="text-base font-semibold">
                           Min Team Size
@@ -597,7 +597,7 @@ const EventCreation = () => {
                   placeholder="Write a detailed description of your event..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full min-h-[120px] p-4 bg-card border-[3px] border-foreground rounded-[12px] shadow-neu font-medium resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full min-h-[120px] p-4 bg-card border-[1px] border-foreground rounded-[12px] shadow-neu font-medium resize-none focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             </NeuCard>
@@ -737,7 +737,7 @@ const EventCreation = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <Label className="text-base font-semibold flex items-center gap-2">
-                    <span className="w-8 h-8 bg-warning text-warning-foreground rounded-full flex items-center justify-center text-sm font-bold border-[2px] border-foreground">
+                    <span className="w-8 h-8 bg-warning text-warning-foreground rounded-full flex items-center justify-center text-sm font-bold border-[1px] border-foreground">
                       1st
                     </span>
                     First Prize
@@ -751,7 +751,7 @@ const EventCreation = () => {
 
                 <div className="space-y-2">
                   <Label className="text-base font-semibold flex items-center gap-2">
-                    <span className="w-8 h-8 bg-muted text-foreground rounded-full flex items-center justify-center text-sm font-bold border-[2px] border-foreground">
+                    <span className="w-8 h-8 bg-muted text-foreground rounded-full flex items-center justify-center text-sm font-bold border-[1px] border-foreground">
                       2nd
                     </span>
                     Second Prize
@@ -765,7 +765,7 @@ const EventCreation = () => {
 
                 <div className="space-y-2">
                   <Label className="text-base font-semibold flex items-center gap-2">
-                    <span className="w-8 h-8 bg-secondary text-secondary-foreground rounded-full flex items-center justify-center text-sm font-bold border-[2px] border-foreground">
+                    <span className="w-8 h-8 bg-secondary text-secondary-foreground rounded-full flex items-center justify-center text-sm font-bold border-[1px] border-foreground">
                       3rd
                     </span>
                     Third Prize

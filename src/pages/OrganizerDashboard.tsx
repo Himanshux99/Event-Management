@@ -70,7 +70,7 @@ export default function OrganizerDashboard() {
         >
           {stats.map((stat, index) => (
             <NeuCard key={index} variant="static" className="flex items-center gap-4">
-              <div className={`w-12 h-12 ${stat.color} border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center`}>
+              <div className={`w-12 h-12 ${stat.color} border-[1px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center`}>
                 <stat.icon className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
@@ -88,7 +88,7 @@ export default function OrganizerDashboard() {
           transition={{ duration: 0.4, delay: 0.2 }}
         >
           <NeuCard variant="static" padding="none">
-            <div className="p-6 border-b-[3px] border-foreground">
+            <div className="p-6 border-b-[1px] border-foreground">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">Your Events</h2>
                 <NeuButton variant="ghost" size="sm">
@@ -168,7 +168,7 @@ export default function OrganizerDashboard() {
             {/* Mobile Cards */}
             <div className="md:hidden p-4 space-y-4">
               {organizerEvents.map((event) => (
-                <NeuCard key={event.id} variant="flat" padding="sm" className="border-2 border-foreground/20">
+                <NeuCard key={event.id} variant="flat" padding="sm" className="border-2 border-foreground/20  ">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <p className="font-semibold">{event.title}</p>
@@ -208,7 +208,7 @@ export default function OrganizerDashboard() {
           className="mt-8 grid md:grid-cols-3 gap-4"
         >
           <NeuCard className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center">
+            <div className="w-12 h-12 bg-primary border-[1px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center">
               <Plus className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
@@ -218,7 +218,7 @@ export default function OrganizerDashboard() {
           </NeuCard>
 
           <NeuCard className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-secondary border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center">
+            <div className="w-12 h-12 bg-secondary border-[1px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center">
               <QrCode className="w-6 h-6 text-secondary-foreground" />
             </div>
             <div>
@@ -228,7 +228,7 @@ export default function OrganizerDashboard() {
           </NeuCard>
 
           <NeuCard className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center">
+            <div className="w-12 h-12 bg-accent border-[1px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center">
               <BarChart3 className="w-6 h-6 text-accent-foreground" />
             </div>
             <div>

@@ -8,17 +8,17 @@ const neuButtonVariants = cva(
     variants: {
       variant: {
         primary:
-          "bg-primary text-primary-foreground border-[3px] border-foreground rounded-[12px] shadow-neu hover:shadow-neu-lg hover:-translate-x-0.2 hover:-translate-y-0.5 active:shadow-neu-sm active:translate-x-0.5 active:translate-y-0.5",
+          "bg-primary text-primary-foreground border-[1px] border-foreground rounded-[12px] shadow-neu hover:shadow-neu-lg hover:-translate-x-0.2 hover:-translate-y-0.5 active:shadow-neu-sm active:translate-x-0.5 active:translate-y-0.5",
         secondary:
-          "bg-secondary text-secondary-foreground border-[3px] border-foreground rounded-[12px] shadow-neu hover:shadow-neu-lg hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-neu-sm active:translate-x-0.5 active:translate-y-0.5",
+          "bg-secondary text-secondary-foreground border-[1px] border-foreground rounded-[12px] shadow-neu hover:shadow-neu-lg hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-neu-sm active:translate-x-0.5 active:translate-y-0.5",
         accent:
-          "bg-accent text-accent-foreground border-[3px] border-foreground rounded-[12px] shadow-neu hover:shadow-neu-lg hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-neu-sm active:translate-x-0.5 active:translate-y-0.5",
+          "bg-accent text-accent-foreground border-[1px] border-foreground rounded-[12px] shadow-neu hover:shadow-neu-lg hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-neu-sm active:translate-x-0.5 active:translate-y-0.5",
         destructive:
-          "bg-destructive text-destructive-foreground border-[3px] border-foreground rounded-[12px] shadow-neu hover:shadow-neu-lg hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-neu-sm active:translate-x-0.5 active:translate-y-0.5",
+          "bg-destructive text-destructive-foreground border-[1px] border-foreground rounded-[12px] shadow-neu hover:shadow-neu-lg hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-neu-sm active:translate-x-0.5 active:translate-y-0.5",
         outline:
-          "bg-background text-foreground border-[3px] border-foreground rounded-[12px] shadow-neu hover:shadow-neu-lg hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-neu-sm active:translate-x-0.5 active:translate-y-0.5",
+          "bg-background text-foreground border-[1px] border-foreground rounded-[12px] shadow-neu hover:shadow-neu-lg hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-neu-sm active:translate-x-0.5 active:translate-y-0.5",
         ghost:
-          "text-foreground border-[3px] border-transparent rounded-[12px] hover:bg-muted",
+          "text-foreground border-[1px] border-transparent rounded-[12px] hover:bg-muted",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

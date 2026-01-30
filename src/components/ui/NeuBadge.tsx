@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const neuBadgeVariants = cva(
-  "inline-flex items-center px-3 py-1 font-semibold text-sm border-[2px] border-foreground rounded-full transition-all",
+  "inline-flex items-center px-3 py-1 font-semibold text-sm border-[1px] border-foreground rounded-full transition-all",
   {
     variants: {
       variant: {

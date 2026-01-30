@@ -32,12 +32,12 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-background border-b-[3px] border-foreground">
+    <header className="sticky top-0 z-50 bg-background border-b-[1px] border-foreground">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-primary border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center group-hover:shadow-neu transition-all">
+            <div className="w-10 h-10 bg-primary border-[1px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center group-hover:shadow-neu transition-all">
               <FileSliders className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-bold text-xl hidden sm:block ">CampusHub</span>
@@ -61,9 +61,8 @@ export function Header() {
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
             {user ? (
-              <NeuButton variant="destructive" size="sm" onClick={handleLogout}>
+              <NeuButton variant="destructive" size="icon" onClick={handleLogout} title="Logout">
                 <LogOut className="w-4 h-4" />
-                Logout
               </NeuButton>
             ) : (
               <>
@@ -85,7 +84,7 @@ export function Header() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 border-[3px] border-foreground rounded-xl shadow-neu-sm active:shadow-none active:translate-x-0.5 active:translate-y-0.5 transition-all"
+            className="md:hidden p-2 border-[1px] border-foreground rounded-xl shadow-neu-sm active:shadow-none active:translate-x-0.5 active:translate-y-0.5 transition-all"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -100,7 +99,7 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-background border-b-[3px] border-foreground overflow-hidden"
+            className="md:hidden bg-background border-b-[1px] border-foreground overflow-hidden"
           >
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
               {navLinks.map((link) => (
@@ -121,7 +120,7 @@ export function Header() {
                   </div>
                 </Link>
               ))}
-              <div className="flex flex-col gap-2 pt-4 border-t-[3px] border-foreground mt-2">
+              <div className="flex flex-col gap-2 pt-4 border-t-[1px] border-foreground mt-2">
                 <div className="flex justify-center mb-2">
                   <ThemeToggle />
                 </div>
@@ -133,9 +132,9 @@ export function Header() {
                       setMobileMenuOpen(false);
                       handleLogout();
                     }}
+                    title="Logout"
                   >
                     <LogOut className="w-4 h-4" />
-                    Logout
                   </NeuButton>
                 ) : (
                   <div className="flex gap-2">

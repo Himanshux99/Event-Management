@@ -134,7 +134,7 @@
 @layer components {
   /* Neubrutalism card style */
   .neu-card {
-    @apply bg-card border-[3px] border-foreground rounded-[20px] transition-all duration-200;
+    @apply bg-card border-[1px] border-foreground rounded-[20px] transition-all duration-200;
     box-shadow: 4px 4px 0 0 hsl(var(--foreground));
   }
 
@@ -145,7 +145,7 @@
 
   /* Neubrutalism button base */
   .neu-button {
-    @apply font-semibold border-[3px] border-foreground rounded-[12px] transition-all duration-150;
+    @apply font-semibold border-[1px] border-foreground rounded-[12px] transition-all duration-150;
     box-shadow: 1px 1px 0 0 hsl(var(--foreground));
   }
 
@@ -176,7 +176,7 @@
 
   /* Ghost button variant */
   .neu-button-ghost {
-    @apply font-semibold border-[3px] border-transparent rounded-[12px] transition-all duration-150;
+    @apply font-semibold border-[1px] border-transparent rounded-[12px] transition-all duration-150;
   }
 
   .neu-button-ghost:hover {
@@ -185,7 +185,7 @@
 
   /* Input style */
   .neu-input {
-    @apply bg-card border-[3px] border-foreground rounded-[12px] px-4 py-3 font-medium transition-all duration-150;
+    @apply bg-card border-[1px] border-foreground rounded-[12px] px-4 py-3 font-medium transition-all duration-150;
     box-shadow: 3px 3px 0 0 hsl(var(--foreground));
   }
 
@@ -196,7 +196,7 @@
 
   /* Badge styles */
   .neu-badge {
-    @apply inline-flex items-center px-3 py-1 font-semibold text-sm border-[2px] border-foreground rounded-full;
+    @apply inline-flex items-center px-3 py-1 font-semibold text-sm border border-foreground rounded-full;
     box-shadow: 2px 2px 0 0 hsl(var(--foreground));
   }
 

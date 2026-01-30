@@ -67,7 +67,7 @@ export default function Register() {
           <NeuCard variant="static" className="p-8">
             {/* Logo */}
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-secondary border-[3px] border-foreground rounded-2xl shadow-neu mx-auto mb-4 flex items-center justify-center">
+              <div className="w-16 h-16 bg-secondary border-[1px] border-foreground rounded-2xl shadow-neu mx-auto mb-4 flex items-center justify-center">
                 <User className="w-8 h-8 text-secondary-foreground" />
               </div>
               <h1 className="text-2xl font-bold">Create Account</h1>
@@ -195,7 +195,7 @@ export default function Register() {
                   name="year"
                   value={formData.year}
                   onChange={handleChange}
-                  className="flex h-12 w-full bg-card border-[3px] border-foreground rounded-[12px] px-4 py-3 text-base font-medium shadow-neu transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  className="flex h-12 w-full bg-card border-[1px] border-foreground rounded-[12px] px-4 py-3 text-base font-medium shadow-neu transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                   required
                 >
                   <option value="">Select Year</option>

@@ -171,7 +171,7 @@ export default function QRPass() {
               {/* Attendee Info */}
               <div className="p-6">
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 bg-secondary rounded-full border-[3px] border-foreground flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-secondary rounded-full border-[1px] border-foreground flex items-center justify-center flex-shrink-0">
                     <User className="w-6 h-6 text-secondary-foreground" />
                   </div>
                   <div>
