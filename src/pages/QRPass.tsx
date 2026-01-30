@@ -1,9 +1,9 @@
 import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { NeuButton } from "@/components/ui/NeuButton";
 import { NeuCard } from "@/components/ui/NeuCard";
 import { NeuBadge } from "@/components/ui/NeuBadge";
-import { mockEvents } from "@/data/mockEvents";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -15,28 +15,100 @@ import {
   Download,
   Share2,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/authContext";
 import { generateQRPayload } from "@/lib/qr";
-import {QRCodeCanvas} from "qrcode.react";
+import { eventDB, userDB } from "@/lib/firebaseDB";
 import QRCode from "react-qr-code";
 
-// Mock user data
-const mockUser = {
-  name: "John Doe",
-  rollNumber: "21CS1234",
-  college: "ABC Engineering College",
-  branch: "Computer Science",
-  year: "3rd Year",
-};
+interface EventData {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  venue: string;
+  category: string;
+}
+
+interface UserData {
+  name: string;
+  rollNumber: string;
+  college: string;
+  branch: string;
+}
 
 export default function QRPass() {
   const { id } = useParams<{ id: string }>();
-  const event = mockEvents.find((e) => e.id === id);
   const { currentUser } = useAuth();
+  const [event, setEvent] = useState<EventData | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!event) {
+  // Fetch event and user data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        if (!id || !currentUser) {
+          setError("Missing event ID or user not authenticated");
+          return;
+        }
+
+        // Fetch event data
+        const eventData = await eventDB.getById(id);
+        if (!eventData) {
+          setError("Event not found");
+          return;
+        }
+        setEvent({
+          id,
+          title: (eventData as any).title || "",
+          date: (eventData as any).date || "",
+          time: (eventData as any).time || "",
+          venue: (eventData as any).venue || "",
+          category: (eventData as any).category || "",
+        });
+
+        // Fetch user data
+        const userData = await userDB.getById(currentUser.uid);
+        if (userData) {
+          setUser({
+            name: (userData as any).name || "User",
+            rollNumber: (userData as any).rollNumber || "N/A",
+            college: (userData as any).college || "N/A",
+            branch: (userData as any).branch || "N/A",
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load pass details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id, currentUser]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading your pass...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !event || !user) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-16 text-center">
@@ -44,7 +116,7 @@ export default function QRPass() {
             <AlertCircle className="w-16 h-16 mx-auto mb-4 text-destructive" />
             <h1 className="text-2xl font-bold mb-2">Pass Not Found</h1>
             <p className="text-muted-foreground mb-6">
-              The event pass you're looking for doesn't exist.
+              {error || "The event pass you're looking for doesn't exist."}
             </p>
             <Link to="/my-events">
               <NeuButton variant="primary">
@@ -180,12 +252,12 @@ export default function QRPass() {
                     <User className="w-6 h-6 text-secondary-foreground" />
                   </div>
                   <div>
-                    <p className="font-bold">{mockUser.name}</p>
-                    <p className="text-sm text-muted-foreground">{mockUser.rollNumber}</p>
+                    <p className="font-bold">{user.name}</p>
+                    <p className="text-sm text-muted-foreground">{user.rollNumber}</p>
                     <p className="text-xs text-muted-foreground">
-                      {mockUser.branch} • {mockUser.year}
+                      {user.branch}
                     </p>
-                    <p className="text-xs text-muted-foreground">{mockUser.college}</p>
+                    <p className="text-xs text-muted-foreground">{user.college}</p>
                   </div>
                 </div>
               </div>
