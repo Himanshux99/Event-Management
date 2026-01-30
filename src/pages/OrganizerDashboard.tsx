@@ -38,7 +38,7 @@ const stats = [
 
 const handleSeedData = async () => {
   try {
-    const message = await seedAllEvents();
+    await seedAllEvents();
   } catch (error) {
     toast.error("Failed to add demo events.");
   }

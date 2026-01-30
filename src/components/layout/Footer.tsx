@@ -1,22 +1,22 @@
 import { Link } from "react-router-dom";
-import { Calendar, Heart, Mail, Instagram } from "lucide-react";
+import { Calendar, Heart, Mail, Phone } from "lucide-react";
 
 export function Footer() {
   const organizers = [
     {
-      name: "Raj Kumar",
-      instagram: "rajkumar_official",
-      email: "raj.kumar@campushub.com"
+      name: "Himanshu Choyal",
+      email: "himanshu.choyal@vit.edu.in",
+      mobile: "7879946433"
     },
     {
-      name: "Priya Sharma",
-      instagram: "priya_events",
-      email: "priya.sharma@campushub.com"
+      name: "Sujal Tiwari",
+      email: "sujal.tiwari@vit.edu.in",
+      mobile: "8898827525"
     },
     {
-      name: "Arjun Patel",
-      instagram: "arjun_tech",
-      email: "arjun.patel@campushub.com"
+      name: "Varennya Pophali",
+      email: "varennya.pophali@vit.edu.in",
+      mobile: "9136043262"
     }
   ];
 
@@ -84,14 +84,12 @@ export function Footer() {
                     </a>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Instagram className="w-3 h-3" />
+                    <Phone className="w-3 h-3" />
                     <a 
-                      href={`https://instagram.com/${org.instagram}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`tel:${org.mobile}`}
                       className="text-background/80 hover:text-background transition-colors text-xs"
                     >
-                      @{org.instagram}
+                      {org.mobile}
                     </a>
                   </div>
                 </div>

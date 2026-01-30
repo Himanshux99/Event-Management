@@ -4,14 +4,8 @@ import { Menu, X, Calendar, User, LogIn, LogOut , FileSliders } from "lucide-rea
 import { NeuButton } from "@/components/ui/NeuButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/context/authContext";
-import { auth } from "@/lib/firebase";
-import{logoutUser} from"@/lib/firebaseAuth";
-const navLinks = [
-  { href: "/events", label: "Events" },
-  { href: "/my-events", label: "My Events" },
-  { href: "/organizer", label: "Organizer" },
-];
+import { useAuth, type Role } from "@/context/authContext";
+import ThemeToggle from "../ThemeToggle";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -80,7 +74,8 @@ export function Header() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            {user ? (
+            <ThemeToggle />
+            {currentUser ? (
               <NeuButton variant="destructive" size="sm" onClick={handleLogout}>
                 <LogOut className="w-4 h-4" />
               </NeuButton>
@@ -140,8 +135,11 @@ export function Header() {
                   </div>
                 </Link>
               ))}
-              <div className="flex gap-2 pt-4 border-t-[3px] border-foreground mt-2">
-                {user ? (
+              <div className="flex flex-col gap-2 pt-4 border-t-[1px] border-foreground mt-2">
+                <div className="flex justify-center mb-2">
+                  <ThemeToggle />
+                </div>
+                {currentUser ? (
                   <NeuButton
                     variant="outline"
                     className="w-full"
