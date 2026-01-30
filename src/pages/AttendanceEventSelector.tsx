@@ -9,6 +9,7 @@ import { eventDB } from '@/lib/firebaseDB';
 import { motion } from 'framer-motion';
 import { ArrowLeft, QrCode, Calendar, MapPin, Users, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { where } from 'firebase/firestore';
 
 interface Event {
   id: string;
@@ -31,13 +32,19 @@ export default function AttendanceEventSelector() {
       try {
         if (!currentUser?.uid) return;
 
-        // Fetch all published events for this organizer
-        const allEvents = await eventDB.getDrafts(currentUser.uid);
-        // Filter for published/registration-open events only
-        const publishedEvents = (allEvents as Event[]).filter((e: Event) => 
+        // Fetch published/live events for this organizer
+        // Use getByQuery instead of getDrafts to get actual published events
+        const publishedEvents = await eventDB.getByQuery([
+          where('organizerId', '==', currentUser.uid),
+          // Exclude draft events - only get events ready for scanning
+        ]);
+        
+        // Filter for events that are active (registration-open, live, or published)
+        const activeEvents = (publishedEvents as Event[]).filter((e: Event) => 
           e.status === 'registration-open' || e.status === 'live' || e.status === 'published'
         );
-        setEvents(publishedEvents);
+        
+        setEvents(activeEvents);
       } catch (error) {
         console.error('Error fetching events:', error);
       } finally {
@@ -124,7 +131,7 @@ export default function AttendanceEventSelector() {
                   <NeuCard
                     variant="flat"
                     className="h-full flex flex-col cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => navigate(`/organizer/attendance?eventId=${event.id}`)}
+                    onClick={() => navigate(`/organizer/attendance/${event.id}`)}
                   >
                     <div className="flex-1">
                       <h3 className="text-lg font-bold mb-2">{event.title}</h3>

@@ -44,7 +44,7 @@ const App = () => (
             <Route path="/organizer/create-event" element={<ProtectedRoute allowedRoles={["organizer"]}><EventCreation /></ProtectedRoute>} />
             <Route path="/organizer/edit-draft/:draftId" element={<ProtectedRoute allowedRoles={["organizer"]}><EditDraft /></ProtectedRoute>} />
             <Route path="/organizer/attendance" element={<ProtectedRoute allowedRoles={["organizer"]}><AttendanceEventSelector /></ProtectedRoute>} />
-            <Route path="/organizer/attendance" element={<ProtectedRoute allowedRoles={["organizer"]}><AttendanceScanner /></ProtectedRoute>} />
+            <Route path="/organizer/attendance/:eventId" element={<ProtectedRoute allowedRoles={["organizer"]}><AttendanceScanner /></ProtectedRoute>} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
