@@ -59,8 +59,6 @@ export default function Index() {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-16 md:py-24 lg:py-32">
         {/* Background decorations */}
-        <div className="absolute top-20 left-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-40 h-40 bg-secondary/20 rounded-full blur-3xl" />
         <div className="absolute top-40 right-1/4 w-24 h-24 bg-accent/30 rounded-full blur-2xl" />
 
         <div className="container mx-auto px-4 relative z-10">
@@ -216,7 +214,7 @@ export default function Index() {
                 Ready to Transform Your Campus Events?
               </h2>
               <p className="text-lg opacity-90 mb-8">
-                Join thousands of colleges using CampusHub to streamline their event management.
+                Join thousands of colleges using Eventra to streamline their event management.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/register">

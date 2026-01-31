@@ -12,7 +12,7 @@ export function Footer() {
               <div className="w-10 h-10 bg-primary border-[3px] border-background rounded-xl flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-bold text-xl">CampusHub</span>
+              <span className="font-bold text-xl" style={{color: '#6B21A8'}}>Eventra</span>
             </Link>
             <p className="text-background/80 text-sm">
               The complete campus event management platform for colleges.
@@ -52,7 +52,7 @@ export function Footer() {
 
         <div className="border-t border-background/20 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-background/60 text-sm">
-            © 2026 CampusHub. All rights reserved.
+            © 2026 Eventra. All rights reserved.
           </p>
           <p className="flex items-center gap-1 text-background/60 text-sm">
             Made with <Heart className="w-4 h-4 text-destructive fill-destructive" /> for campus communities

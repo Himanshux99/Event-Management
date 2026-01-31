@@ -55,7 +55,7 @@ export function Header() {
             <div className="w-10 h-10 bg-primary border-[3px] border-foreground rounded-xl shadow-neu-sm flex items-center justify-center group-hover:shadow-neu transition-all">
               <Calendar className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-xl hidden sm:block">CampusHub</span>
+            <span className="font-bold text-2xl hidden sm:block" style={{color: '#6B21A8'}}>Eventra</span>
           </Link>
 
           {/* Desktop Navigation */}
