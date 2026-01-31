@@ -112,7 +112,7 @@ export default function EventsTable({ events, loading, onToggleRegistration }: {
                               <Eye className="w-4 h-4" />
                             </NeuButton>
                           </Link>
-                          <Link to={`/organizer/events/${event.id}/scan`}>
+                          <Link to={`/organizer/attendance/${event.id}`}>
                             <NeuButton variant="primary" size="sm">
                               <QrCode className="w-4 h-4" />
                             </NeuButton>
@@ -170,7 +170,7 @@ export default function EventsTable({ events, loading, onToggleRegistration }: {
                         <Eye className="w-4 h-4" />
                       </NeuButton>
                     </Link>
-                    <Link to={`/organizer/events/${event.id}/scan`} className="flex-1">
+                    <Link to={`/organizer/attendance/${event.id}`} className="flex-1">
                       <NeuButton variant="primary" size="sm" className="w-full">
                         <QrCode className="w-4 h-4" />
                       </NeuButton>

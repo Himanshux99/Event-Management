@@ -58,7 +58,7 @@ export default function QRPass() {
           setError("Missing event ID or user not authenticated");
           return;
         }
-
+        
         // Fetch event data
         const eventData = await eventDB.getById(id);
         if (!eventData) {

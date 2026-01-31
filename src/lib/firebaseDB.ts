@@ -306,15 +306,24 @@ export const teamInvitesDB = {
 };
 
 // Attendance operations (Firestore-based)
+export interface Attendance {
+  id?: string;
+  eventId: string;
+  userId: string;
+  checkedInAt: Timestamp;
+  scannedBy: string; // organizerId or volunteerId
+}
+
 interface AttendanceRecord {
   eventId: string;
   userId: string;
   checkedInAt: Timestamp;
+  scannedBy: string;
 }
 
 export const attendanceDB = {
   // Check in a user for an event
-  checkIn: async (userId: string, eventId: string): Promise<{ success: boolean; message: string }> => {
+  checkIn: async (userId: string, eventId: string, organizerId: string): Promise<{ success: boolean; message: string }> => {
     try {
       // Check if user already checked in
       const alreadyChecked = await attendanceDB.isAlreadyChecked(userId, eventId);
@@ -340,6 +349,7 @@ export const attendanceDB = {
         eventId,
         userId,
         checkedInAt: Timestamp.now(),
+        scannedBy: organizerId,
       } as AttendanceRecord);
 
       return { success: true, message: 'SUCCESS' };
@@ -396,6 +406,51 @@ export const attendanceDB = {
     } catch (error) {
       console.error('Error getting attendance records:', error);
       return [];
+    }
+  },
+
+  // Real-time listener for attendance count
+  subscribeToAttendanceCount: (eventId: string, callback: (count: number) => void) => {
+    try {
+      const attendanceRef = collection(db, COLLECTIONS.ATTENDANCE);
+      const q = query(
+        attendanceRef,
+        where('eventId', '==', eventId)
+      );
+
+      return onSnapshot(q, (snapshot) => {
+        callback(snapshot.size);
+      }, (error) => {
+        console.error('Error in attendance listener:', error);
+      });
+    } catch (error) {
+      console.error('Error subscribing to attendance:', error);
+      return () => {};
+    }
+  },
+
+  // Real-time listener for all attendance records in event
+  subscribeToEventAttendance: (eventId: string, callback: (records: Attendance[]) => void) => {
+    try {
+      const attendanceRef = collection(db, COLLECTIONS.ATTENDANCE);
+      const q = query(
+        attendanceRef,
+        where('eventId', '==', eventId),
+        orderBy('checkedInAt', 'desc')
+      );
+
+      return onSnapshot(q, (snapshot) => {
+        const records = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Attendance));
+        callback(records);
+      }, (error) => {
+        console.error('Error in attendance records listener:', error);
+      });
+    } catch (error) {
+      console.error('Error subscribing to attendance records:', error);
+      return () => {};
     }
   },
 };

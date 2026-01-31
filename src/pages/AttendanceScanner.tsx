@@ -6,6 +6,7 @@ import { NeuCard } from "@/components/ui/NeuCard";
 import { NeuButton } from "@/components/ui/NeuButton";
 import { attendanceDB, eventDB, userDB } from "@/lib/firebaseDB";
 import { QRPayload } from "@/lib/qr";
+import { useAuth } from "@/context/authContext";
 import {
   AlertCircle,
   CheckCircle2,
@@ -31,6 +32,7 @@ interface ScanResult {
 
 export default function AttendanceScanner() {
   const { eventId } = useParams<{ eventId: string }>();
+  const { currentUser } = useAuth();
   const [event, setEvent] = useState<any>(null);
   const [attendanceCount, setAttendanceCount] = useState(0);
   const [scanResult, setScanResult] = useState<ScanResult>({
@@ -96,6 +98,8 @@ export default function AttendanceScanner() {
 
     const startCamera = async () => {
       try {
+        console.log("🎥 Starting camera...");
+        
         // Wait a bit for DOM to be ready
         await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -103,9 +107,11 @@ export default function AttendanceScanner() {
 
         const container = document.getElementById(scannerIdRef.current);
         if (!container) {
-          console.error("Container not found");
+          console.error("❌ Container not found");
           return;
         }
+
+        console.log("✅ Container found:", scannerIdRef.current);
 
         // Completely clear the container
         container.innerHTML = "";
@@ -114,22 +120,41 @@ export default function AttendanceScanner() {
         const qr = new Html5Qrcode(scannerIdRef.current);
         qrRef.current = qr;
 
+        console.log("📷 Requesting camera permissions...");
+
         await qr.start(
           { facingMode: "environment" },
           {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
+            fps: 30, // Increased FPS for better detection
+            qrbox: function(viewfinderWidth, viewfinderHeight) {
+              // Make qrbox 70% of the smallest dimension
+              let minEdgePercentage = 0.7;
+              let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+              let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
+              return {
+                width: qrboxSize,
+                height: qrboxSize
+              };
+            },
             aspectRatio: 1.0,
           },
-          handleScan,
-          () => {} // error callback
+          (decodedText, decodedResult) => {
+            console.log("✅ QR DETECTED!", decodedText);
+            handleScan(decodedText);
+          },
+          (errorMessage) => {
+            // This fires constantly when no QR is detected - ignore it
+            // console.log("No QR in frame:", errorMessage);
+          }
         );
+
+        console.log("✅ Camera started successfully!");
 
         if (mounted) {
           setIsScanning(true);
         }
       } catch (err: any) {
-        console.error("Camera error:", err);
+        console.error("💥 Camera error:", err);
         if (mounted) {
           setCameraError(
             err?.message?.includes("Permission")
@@ -184,18 +209,22 @@ export default function AttendanceScanner() {
     // Prevent multiple simultaneous scans
     if (scanResult.status === "processing") return;
 
+    console.log("🔍 QR Scanned:", raw);
     setScanResult({ status: "processing", message: "Verifying..." });
 
     try {
       const payload = parseQR(raw);
+      console.log("📦 Parsed Payload:", payload);
 
       if (!payload) {
+        console.error("❌ Invalid QR Code");
         setScanResult({ status: "invalid", message: "Invalid QR Code" });
         toast.error("Invalid QR");
         return reset();
       }
 
       if (payload.eventId !== eventId) {
+        console.error("❌ Wrong event ID. Expected:", eventId, "Got:", payload.eventId);
         setScanResult({
           status: "invalid",
           message: "QR is for different event"
@@ -204,17 +233,32 @@ export default function AttendanceScanner() {
         return reset();
       }
 
+      console.log("👤 Fetching user:", payload.userId);
       const user = await userDB.getById(payload.userId);
 
       if (!user) {
+        console.error("❌ User not found:", payload.userId);
         setScanResult({ status: "invalid", message: "User not found" });
         toast.error("User not found");
         return reset();
       }
 
-      const res = await attendanceDB.checkIn(payload.userId, eventId!);
+      console.log("✅ User found:", user);
+
+      // Check if currentUser exists (the person scanning)
+      if (!currentUser) {
+        console.error("❌ No current user (scanner)");
+        setScanResult({ status: "error", message: "Scanner not authenticated" });
+        toast.error("Please log in to scan");
+        return reset();
+      }
+
+      console.log("📝 Attempting check-in...");
+      const res = await attendanceDB.checkIn(payload.userId, eventId!, currentUser.uid);
+      console.log("📋 Check-in result:", res);
 
       if (res.message === "ALREADY_USED") {
+        console.warn("⚠️ Already checked in");
         setScanResult({
           status: "already_used",
           message: "Already checked in"
@@ -224,6 +268,7 @@ export default function AttendanceScanner() {
       }
 
       if (res.message === "SUCCESS") {
+        console.log("✅ Check-in successful!");
         const newCount = await attendanceDB.getCountByEvent(eventId!);
         setAttendanceCount(newCount);
 
@@ -237,9 +282,9 @@ export default function AttendanceScanner() {
         return reset(1500);
       }
 
-      throw new Error();
+      throw new Error("Unexpected response: " + res.message);
     } catch (err) {
-      console.error("Scan error:", err);
+      console.error("💥 Scan error:", err);
       setScanResult({ status: "error", message: "Scan failed" });
       toast.error("Scan failed");
       reset();
@@ -330,12 +375,16 @@ export default function AttendanceScanner() {
             </NeuButton>
           </NeuCard>
         ) : (
-          <NeuCard padding="none">
+          <NeuCard padding="none" className="overflow-hidden relative">
             <div
               id={scannerIdRef.current}
-              className="w-full min-h-[400px] flex items-center justify-center bg-black"
-              style={{ position: "relative" }}
+              className="w-full min-h-[400px] flex items-center justify-center bg-black rounded-lg"
             />
+            {!isScanning && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                <Loader2 className="w-8 h-8 animate-spin text-white" />
+              </div>
+            )}
           </NeuCard>
         )}
 
@@ -375,6 +424,19 @@ export default function AttendanceScanner() {
           <p>• Wait for confirmation</p>
           <p>• Each QR scans only once</p>
         </NeuCard>
+
+        {/* Test Button - Remove this after testing */}
+        <NeuButton 
+          variant="primary" 
+          className="w-full"
+          onClick={() => {
+            const testQR = '{"userId":"1dkL7Q2H9Fh2PdFWrTurMJ0D7MM2","eventId":"8ppH7YWohPBJki69GThQ","issuedAt":1769819671140}';
+            console.log("🧪 Testing with QR:", testQR);
+            handleScan(testQR);
+          }}
+        >
+          🧪 Test Scan (Click to simulate scanning)
+        </NeuButton>
 
       </div>
     </Layout>
