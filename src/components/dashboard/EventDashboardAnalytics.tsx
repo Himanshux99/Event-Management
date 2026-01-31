@@ -33,6 +33,8 @@ interface EventDashboardAnalyticsProps {
   registrationsCount: number;
   checkInsCount: number;
   attendanceOverTime: { time: string; count: number; total: number }[];
+  collectedAmount?: number;
+  paidRegistrationsCount?: number;
 }
 
 export function EventDashboardAnalytics({
@@ -40,6 +42,8 @@ export function EventDashboardAnalytics({
   registrationsCount,
   checkInsCount,
   attendanceOverTime,
+  collectedAmount = 0,
+  paidRegistrationsCount = 0,
 }: EventDashboardAnalyticsProps) {
   const funnelData = useMemo(() => {
     const registered = teams.filter((t) => t.status === "registered").length;
@@ -105,6 +109,11 @@ export function EventDashboardAnalytics({
         <NeuCard variant="static" className="p-4">
           <p className="text-xs text-muted-foreground font-semibold">Qualified teams</p>
           <p className="text-2xl font-bold">{qualifiedCount}</p>
+        </NeuCard>
+        <NeuCard variant="static" className="p-4">
+          <p className="text-xs text-muted-foreground font-semibold">Total collected</p>
+          <p className="text-2xl font-bold">₹{collectedAmount.toLocaleString('en-IN')}</p>
+          <p className="text-xs text-muted-foreground mt-1">{paidRegistrationsCount} paid registrations</p>
         </NeuCard>
       </div>
 

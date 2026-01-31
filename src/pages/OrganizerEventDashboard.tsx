@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { seedEventSampleData } from "@/service/seedEventSampleData";
-import { eventDB, teamDB, eventUpdatesDB } from "@/lib/firebaseDB";
+import { eventDB, teamDB, eventUpdatesDB, paymentDB } from "@/lib/firebaseDB";
 import { where, collection, query, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -62,6 +62,8 @@ export default function OrganizerEventDashboard() {
   const [checkedInUserIds, setCheckedInUserIds] = useState<Set<string>>(new Set());
   const [attendanceSnap, setAttendanceSnap] = useState<{ time: number; userId: string }[]>([]);
   const [updates, setUpdates] = useState<EventUpdate[]>([]);
+  const [collectedAmount, setCollectedAmount] = useState(0);
+  const [paidRegistrationsCount, setPaidRegistrationsCount] = useState(0);
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const [loading, setLoading] = useState(true);
   const [updateMessage, setUpdateMessage] = useState("");
@@ -131,11 +133,19 @@ export default function OrganizerEventDashboard() {
       setUpdates(list);
     });
 
+    // Real-time: collected amount from payments
+    const unsubPayments = paymentDB.subscribeToCollectedAmount(currentEventId, async (amount) => {
+      setCollectedAmount(amount);
+      const paidCount = await paymentDB.getCountByEvent(currentEventId);
+      setPaidRegistrationsCount(paidCount);
+    });
+
     return () => {
       unsubRegs();
       unsubAtt();
       unsubTeams();
       unsubUpdates();
+      unsubPayments();
     };
   }, [currentEventId]);
 
@@ -638,6 +648,8 @@ export default function OrganizerEventDashboard() {
                     registrationsCount={registrationsCount}
                     checkInsCount={checkInsCount}
                     attendanceOverTime={attendanceOverTime}
+                    collectedAmount={collectedAmount}
+                    paidRegistrationsCount={paidRegistrationsCount}
                   />
                 </motion.div>
               )}

@@ -58,6 +58,10 @@ interface EventData {
   maxTeamSize?: number | null;
   eventDescription?: string;
   rounds?: any[];
+  // Round configuration
+  totalRounds?: number;
+  currentRound?: number;
+  maxTeamsPerRound?: number[]; // [round1Cap, round2Cap, ...]
 }
 
 // Helper functions
@@ -340,9 +344,34 @@ export default function EventDetails(): JSX.Element {
             )}
 
             {/* Rounds Section */}
-            {event.rounds && event.rounds.length > 0 && (
+            {((event.rounds && event.rounds.length > 0) || event.totalRounds) && (
               <NeuCard variant="static">
                 <h2 className="text-xl font-bold mb-6">Event Rounds</h2>
+                {/* Rounds summary */}
+                {(event.totalRounds || event.currentRound || (event.maxTeamsPerRound && event.maxTeamsPerRound.length > 0)) && (
+                  <div className="mb-4 grid sm:grid-cols-3 gap-3">
+                    {typeof event.totalRounds === 'number' && (
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">Total Rounds</p>
+                        <p className="font-semibold">{event.totalRounds}</p>
+                      </div>
+                    )}
+
+                    {typeof event.currentRound === 'number' && (
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">Current Round</p>
+                        <p className="font-semibold">{event.currentRound}</p>
+                      </div>
+                    )}
+
+                    {event.maxTeamsPerRound && event.maxTeamsPerRound.length > 0 && (
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">Round Capacities</p>
+                        <p className="font-semibold">{event.maxTeamsPerRound.join(" / ")}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="space-y-4">
                   {event.rounds.map((round: any, index: number) => (
                     <div
