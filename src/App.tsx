@@ -17,6 +17,8 @@ import AttendanceScanner from "./pages/AttendanceScanner";
 import AttendanceEventSelector from "./pages/AttendanceEventSelector";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import { AuthProvider } from "./context/authContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EditDraft from "./pages/EditDraft";
@@ -48,6 +50,9 @@ const App = () => (
             <Route path="/organizer/edit-draft/:draftId" element={<ProtectedRoute allowedRoles={["organizer"]}><EditDraft /></ProtectedRoute>} />
             <Route path="/organizer/attendance" element={<ProtectedRoute allowedRoles={["organizer"]}><AttendanceEventSelector /></ProtectedRoute>} />
             <Route path="/organizer/attendance/:eventId" element={<ProtectedRoute allowedRoles={["organizer"]}><AttendanceScanner /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/organizer/settings" element={<ProtectedRoute allowedRoles={["organizer"]}><OrganizerSettings /></ProtectedRoute>} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

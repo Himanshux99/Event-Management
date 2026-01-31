@@ -27,6 +27,10 @@ export default function ParticipationSettings({
   setEventDescription,
   rounds,
   setRounds,
+  registrationFeeEnabled,
+  setRegistrationFeeEnabled,
+  registrationFeeAmount,
+  setRegistrationFeeAmount,
 }: any) {
   const addRound = () => {
     const newRound: Round = {
@@ -125,6 +129,30 @@ export default function ParticipationSettings({
               value={maxRegistrations}
               onChange={(e) => setMaxRegistrations(e.target.value)}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-base font-semibold">Registration Fee</Label>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-muted-foreground">Apply fee</label>
+                <input
+                  type="checkbox"
+                  checked={!!registrationFeeEnabled}
+                  onChange={(e) => setRegistrationFeeEnabled(!!e.target.checked)}
+                />
+              </div>
+
+              <div className="flex-1">
+                <NeuInput
+                  type="number"
+                  placeholder="Amount (e.g., 50)"
+                  value={registrationFeeAmount ?? ""}
+                  onChange={(e) => setRegistrationFeeAmount(e.target.value)}
+                  disabled={!registrationFeeEnabled}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </NeuCard>

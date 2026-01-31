@@ -1,0 +1,7 @@
+{
+  "razorpay": {
+    "key_id": "rzp_test_SAOglCtGZ1PZMx",
+    "key_secret": "AF10kc9OUL4qsQ056eVeNy6s",
+    "webhook_secret": "sujal"
+  }
+}

@@ -28,6 +28,7 @@ export const COLLECTIONS = {
   ATTENDANCE: 'attendance',
   TEAMS: 'teams',
   EVENT_UPDATES: 'eventUpdates',
+  PAYMENTS: 'payments',
 };
 
 // Event operations
@@ -607,6 +608,71 @@ export const eventUpdatesDB = {
   },
 };
 
-// Export utility functions
-export const createTimestamp = () => Timestamp.now();
-export const convertTimestamp = (timestamp: Timestamp) => timestamp.toDate();
+// Payment collection operations
+export const paymentDB = {
+  // Get total amount collected for an event (all successful payments)
+  getTotalCollectedByEvent: async (eventId: string): Promise<number> => {
+    try {
+      const paymentsRef = collection(db, COLLECTIONS.PAYMENTS);
+      const q = query(
+        paymentsRef,
+        where("eventId", "==", eventId),
+        where("status", "==", "captured") // Only captured/successful payments
+      );
+      const querySnapshot = await getDocs(q);
+      let total = 0;
+      querySnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        total += Number(data.amount || 0);
+      });
+      return total;
+    } catch (error) {
+      console.error("Error fetching collected amount:", error);
+      return 0;
+    }
+  },
+
+  // Get payment count for an event
+  getCountByEvent: async (eventId: string): Promise<number> => {
+    try {
+      const paymentsRef = collection(db, COLLECTIONS.PAYMENTS);
+      const q = query(
+        paymentsRef,
+        where("eventId", "==", eventId),
+        where("status", "==", "captured")
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.size;
+    } catch (error) {
+      console.error("Error fetching payment count:", error);
+      return 0;
+    }
+  },
+
+  // Real-time listener for total collected amount
+  subscribeToCollectedAmount: (eventId: string, callback: (amount: number) => void) => {
+    try {
+      const paymentsRef = collection(db, COLLECTIONS.PAYMENTS);
+      const q = query(
+        paymentsRef,
+        where("eventId", "==", eventId)
+      );
+
+      return onSnapshot(q, (snapshot) => {
+        let total = 0;
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          if (data.status === "captured" || data.status === "paid") {
+            total += Number(data.amount || 0);
+          }
+        });
+        callback(total);
+      }, (error) => {
+        console.error("Error in collected amount listener:", error);
+      });
+    } catch (error) {
+      console.error("Error subscribing to collected amount:", error);
+      return () => {};
+    }
+  },
+};
