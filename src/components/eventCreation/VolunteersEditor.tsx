@@ -10,22 +10,28 @@ export default function VolunteersEditor({ volunteers, userSearch, setUserSearch
       <h2 className="text-xl font-bold text-foreground mb-6">Volunteers</h2>
 
       <div className="space-y-3">
-        <div>
-          <label className="block text-sm font-medium">Search user by email</label>
-          <div className="relative">
-            <NeuInput placeholder="Type email to search..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
-            {filteredUsers.length > 0 && (
-              <div className="absolute z-10 mt-2 w-full bg-card border-[3px] border-foreground rounded-[12px] shadow-neu max-h-48 overflow-auto">
-                {filteredUsers.map((email: string) => (
-                  <button key={email} type="button" onClick={() => addVolunteer(email)} className="w-full text-left px-4 py-2 hover:bg-muted font-medium">{email}</button>
-                ))}
-              </div>
-            )}
+        <div className="flex gap-4">
+          <div className="w-1/2">
+            <label className="block text-sm font-medium">Search user by email</label>
+            <div className="relative">
+              <NeuInput placeholder="Type email to search..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
+              {filteredUsers.length > 0 && (
+                <div className="absolute z-10 mt-2 w-full bg-card border-[3px] border-foreground rounded-[12px] shadow-neu max-h-48 overflow-auto">
+                  {filteredUsers.map((email: string) => (
+                    <button key={email} type="button" onClick={() => addVolunteer(email)} className="w-full text-left px-4 py-2 hover:bg-muted font-medium">{email}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="w-1/2">
+            <label className="block text-sm font-medium">Add email manually</label>
+            <NeuInput placeholder="Add email manually" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <NeuInput placeholder="Add email manually" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
+        <div>
           <NeuButton variant="outline" onClick={() => addVolunteer(userSearch.trim())}>Add</NeuButton>
         </div>
 

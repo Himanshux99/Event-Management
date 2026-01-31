@@ -20,6 +20,7 @@ import Unauthorized from "./pages/Unauthorized";
 import { AuthProvider } from "./context/authContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EditDraft from "./pages/EditDraft";
+import AnimatedBackground from "./components/layout/AnimatedBackground";
 
 const queryClient = new QueryClient();
 

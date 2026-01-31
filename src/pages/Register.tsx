@@ -154,7 +154,7 @@ export default function Register() {
                 <div className="w-16 h-16 bg-secondary border-[3px] border-foreground rounded-2xl shadow-neu mx-auto mb-4 flex items-center justify-center">
                   <User className="w-8 h-8 text-secondary-foreground" />
                 </div>
-                <h1 className="text-3xl font-bold mb-2">Join CampusHub</h1>
+                <h1 className="text-3xl font-bold mb-2" style={{color: '#6B21A8'}}>Join Eventra</h1>
                 <p className="text-muted-foreground">Choose your account type to get started</p>
               </div>
 
@@ -253,7 +253,7 @@ export default function Register() {
                 <p className="text-muted-foreground">
                   {selectedRole === "organizer"
                     ? "Sign up to create and manage events as an organizer."
-                    : "Join CampusHub and start exploring events as a student."}
+                    : "Join Eventra and start exploring events as a student."}
                 </p>
               </div>
 
