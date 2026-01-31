@@ -68,12 +68,12 @@ export default function ParticipationSettings({
             <Label className="text-base font-semibold">
               Participation Type
             </Label>
-            <div className="flex gap-3">
+            <div className="flex gap-3 max-w-md">
               <button
                 type="button"
                 onClick={() => setIsTeamEvent(false)}
                 className={cn(
-                  "flex-1 h-12 px-4 font-semibold border-[3px] border-foreground rounded-[12px] transition-all",
+                  "flex-1 h-10 px-3 text-sm font-semibold border-[3px] border-foreground rounded-[12px] transition-all",
                   !isTeamEvent
                     ? "bg-secondary text-secondary-foreground shadow-neu"
                     : "bg-card text-foreground hover:bg-muted",
@@ -85,7 +85,7 @@ export default function ParticipationSettings({
                 type="button"
                 onClick={() => setIsTeamEvent(true)}
                 className={cn(
-                  "flex-1 h-12 px-4 font-semibold border-[3px] border-foreground rounded-[12px] transition-all",
+                  "flex-1 h-10 px-3 text-sm font-semibold border-[3px] border-foreground rounded-[12px] transition-all",
                   isTeamEvent
                     ? "bg-secondary text-secondary-foreground shadow-neu"
                     : "bg-card text-foreground hover:bg-muted",

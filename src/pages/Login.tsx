@@ -23,7 +23,7 @@ export default function Login() {
     try {
       await loginUser(email, password);
       toast.success("Login successful!", {
-        description: "Welcome back to CampusHub!",
+        description: "Welcome back to Eventra!",
       });
       // Use replace so the login page is removed from history
       navigate("/", { replace: true }); 
@@ -72,7 +72,7 @@ export default function Login() {
                 <Calendar className="w-8 h-8 text-primary-foreground" />
               </div>
               <h1 className="text-2xl font-bold">Welcome Back!</h1>
-              <p className="text-muted-foreground">Login to your CampusHub account</p>
+              <p className="text-muted-foreground">Login to your Eventra account</p>
             </div>
 
             {/* Form */}

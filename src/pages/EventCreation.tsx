@@ -361,7 +361,7 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
 
   return (
     <Layout>
-      <div className="min-h-screen bg-background py-8">
+      <div className="min-h-screen bg-transparent py-8">
         <div className="container max-w-6xl mx-auto px-4">
           {/* Page Header */}
           <div className="mb-8">
@@ -375,67 +375,57 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
             </p>
           </div>
 
-          {/* Two Column Form */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* LEFT COLUMN */}
-            <div className="space-y-6">
-              <BasicInfo
-                eventTitle={eventTitle}
-                setEventTitle={setEventTitle}
-                eventType={eventType}
-                setEventType={setEventType}
-                isInterCollege={isInterCollege}
-                setIsInterCollege={setIsInterCollege}
-                date={date}
-                setDate={setDate}
-                time={time}
-                setTime={setTime}
-                startTime={startTime}
-                setStartTime={setStartTime}
-                duration={duration}
-                setDuration={setDuration}
-                venue={venue}
-                setVenue={setVenue}
-                venues={venues}
-              />
-            </div>
+          {/* Single Column Form */}
+          <div className="space-y-6 mb-8">
+            <BasicInfo
+              eventTitle={eventTitle}
+              setEventTitle={setEventTitle}
+              eventType={eventType}
+              setEventType={setEventType}
+              isInterCollege={isInterCollege}
+              setIsInterCollege={setIsInterCollege}
+              date={date}
+              setDate={setDate}
+              time={time}
+              setTime={setTime}
+              startTime={startTime}
+              setStartTime={setStartTime}
+              duration={duration}
+              setDuration={setDuration}
+              venue={venue}
+              setVenue={setVenue}
+              venues={venues}
+            />
 
-            {/* RIGHT COLUMN */}
-            <div className="space-y-6">
-              <ParticipationSettings
-                isTeamEvent={isTeamEvent}
-                setIsTeamEvent={setIsTeamEvent}
-                minTeamSize={minTeamSize}
-                setMinTeamSize={setMinTeamSize}
-                maxTeamSize={maxTeamSize}
-                setMaxTeamSize={setMaxTeamSize}
-                maxRegistrations={maxRegistrations}
-                setMaxRegistrations={setMaxRegistrations}
-                eventDescription={eventDescription}
-                setEventDescription={setEventDescription}
-                rounds={rounds}
-                setRounds={setRounds}
-                registrationFeeEnabled={registrationFeeEnabled}
-                setRegistrationFeeEnabled={setRegistrationFeeEnabled}
-                registrationFeeAmount={registrationFeeAmount}
-                setRegistrationFeeAmount={setRegistrationFeeAmount}
-              />
+            <ParticipationSettings
+              isTeamEvent={isTeamEvent}
+              setIsTeamEvent={setIsTeamEvent}
+              minTeamSize={minTeamSize}
+              setMinTeamSize={setMinTeamSize}
+              maxTeamSize={maxTeamSize}
+              setMaxTeamSize={setMaxTeamSize}
+              maxRegistrations={maxRegistrations}
+              setMaxRegistrations={setMaxRegistrations}
+              eventDescription={eventDescription}
+              setEventDescription={setEventDescription}
+              rounds={rounds}
+              setRounds={setRounds}
+            />
 
-              <EligibilityRules
-                eligibleYear={eligibleYear}
-                setEligibleYear={setEligibleYear}
-                eligibleBranch={eligibleBranch}
-                setEligibleBranch={setEligibleBranch}
-                eligibleCollege={eligibleCollege}
-                setEligibleCollege={setEligibleCollege}
-                years={years}
-                branches={branches}
-                colleges={colleges}
-              />
-            </div>
+            <EligibilityRules
+              eligibleYear={eligibleYear}
+              setEligibleYear={setEligibleYear}
+              eligibleBranch={eligibleBranch}
+              setEligibleBranch={setEligibleBranch}
+              eligibleCollege={eligibleCollege}
+              setEligibleCollege={setEligibleCollege}
+              years={years}
+              branches={branches}
+              colleges={colleges}
+            />
           </div>
 
-          {/* BOTTOM SECTION */}
+          {/* Additional Sections */}
           <div className="space-y-6">
             <DescriptionEditor description={description} setDescription={setDescription} guidelines={guidelines} setGuidelines={setGuidelines} />
 

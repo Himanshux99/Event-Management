@@ -122,6 +122,79 @@
   }
 }
 
+.app-root {
+  position: relative;
+  min-height: 100vh;
+}
+
+.app-content {
+  position: relative;
+  z-index: 1;
+}
+
+.animated-bg {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #E5F0FA 0%, #A2D2FF 100%);
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.icon-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.animated-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.02), transparent 50%),
+    radial-gradient(circle at 80% 30%, rgba(0, 0, 0, 0.02), transparent 55%),
+    radial-gradient(circle at 30% 80%, rgba(0, 0, 0, 0.02), transparent 60%);
+}
+
+.bg-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #424242;
+  opacity: 0.22;
+  animation: bg-float var(--duration, 32s) ease-in-out infinite;
+  filter: blur(0.2px);
+}
+
+.bg-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes bg-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(var(--float-x, 18px), var(--float-y, -18px), 0)
+      rotate(var(--float-rotate, 4deg));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-icon {
+    animation: none;
+  }
+}
+
 @layer components {
   /* Neubrutalism card style */
   .neu-card {

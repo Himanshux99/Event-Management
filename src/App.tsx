@@ -22,7 +22,7 @@ import Settings from "./pages/Settings";
 import { AuthProvider } from "./context/authContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EditDraft from "./pages/EditDraft";
-import OrganizerSettings from "@/pages/OrganizerSettings";
+import AnimatedBackground from "./components/layout/AnimatedBackground";
 
 const queryClient = new QueryClient();
 
