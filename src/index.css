@@ -283,4 +283,44 @@
   .neu-badge-destructive {
     @apply neu-badge bg-destructive text-destructive-foreground;
   }
+
+  /* QR Scanner Styles */
+  #qr-reader {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100% !important;
+    position: relative;
+  }
+
+  #qr-reader video {
+    width: 100% !important;
+    height: auto !important;
+    border-radius: 0.5rem;
+    object-fit: cover;
+  }
+
+  #qr-reader canvas {
+    display: block !important;
+  }
+
+  .html5-qrcode-element {
+    width: 100% !important;
+  }
+
+  #qr-reader__camera_permission_button {
+    @apply bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition;
+  }
+
+  #qr-reader__message {
+    @apply text-muted-foreground text-sm;
+  }
+
+  .qr-shaded-region {
+    background: rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .html5-qrcode-message {
+    @apply text-muted-foreground text-xs;
+  }
 }

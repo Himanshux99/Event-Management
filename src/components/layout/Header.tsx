@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Calendar, User, LogIn, LogOut } from "lucide-react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, Calendar, User, LogIn, LogOut, Settings } from "lucide-react";
 import { NeuButton } from "@/components/ui/NeuButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ import type { Role } from "@/context/authContext";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [avatarOpen, setAvatarOpen] = useState(false);
   const location = useLocation();
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
@@ -25,25 +26,20 @@ export function Header() {
   const role: Role | undefined = currentUser?.role;
 
   const navLinks = (() => {
-    // default public links
-    const base = [];
-    if (!currentUser) return base;
+    const links: { href: string; label: string }[] = [];
+    if (!currentUser) return links;
 
-    switch (role) {
-      case "student":
-        return [
-          ...base,
-          { href: "/my-events", label: "My Events" },
-        ];
-      case "organizer":
-        return [
-          ...base,
-          { href: "/organizer", label: "Organizer" },
-          { href: "/organizer/create-event", label: "Create Event" },
-        ];
-      default:
-        return base;
+    if (role === "student") {
+      links.push({ href: "/events", label: "Events" });
+      links.push({ href: "/my-events", label: "My Events" });
     }
+
+    if (role === "organizer") {
+      links.push({ href: "/organizer", label: "Dashboard" });
+      links.push({ href: "/organizer/create-event", label: "Create Event" });
+    }
+
+    return links;
   })();
 
   return (
@@ -61,24 +57,51 @@ export function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-2">
             {navLinks.map((link) => (
-              <Link key={link.href} to={link.href}>
+              <NavLink key={link.href} to={link.href} className={({ isActive }) => "rounded-md"}>
                 <NeuButton
                   variant={location.pathname === link.href ? "primary" : "ghost"}
                   size="sm"
                 >
                   {link.label}
                 </NeuButton>
-              </Link>
+              </NavLink>
             ))}
           </nav>
 
-          {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* Desktop Avatar / Auth */}
+          <div className="hidden md:flex items-center gap-3 relative">
             {currentUser ? (
-              <NeuButton variant="destructive" size="sm" onClick={handleLogout}>
-                <LogOut className="w-4 h-4" />
-                Logout
-              </NeuButton>
+              <>
+                <button
+                  onClick={() => setAvatarOpen((s) => !s)}
+                  className="flex items-center gap-2 p-1 rounded-full hover:shadow-neu"
+                >
+                  <div className="w-9 h-9 rounded-full bg-foreground/10 flex items-center justify-center font-semibold">
+                    {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : currentUser.email?.charAt(0).toUpperCase()}
+                  </div>
+                </button>
+
+                {avatarOpen && (
+                  <div className="absolute right-0 top-14 w-44 bg-background border-[1px] border-foreground rounded-xl shadow-neu p-2">
+                    <Link to="/profile" onClick={() => setAvatarOpen(false)}>
+                      <div className="py-2 px-3 hover:bg-muted rounded-md flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        <span>Profile</span>
+                      </div>
+                    </Link>
+                    <Link to="/settings" onClick={() => setAvatarOpen(false)}>
+                      <div className="py-2 px-3 hover:bg-muted rounded-md flex items-center gap-2">
+                        <Settings className="w-4 h-4" />
+                        <span>Settings</span>
+                      </div>
+                    </Link>
+                    <div className="py-2 px-3 hover:bg-muted rounded-md flex items-center gap-2 cursor-pointer" onClick={handleLogout}>
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <>
                 <Link to="/login">
@@ -135,21 +158,35 @@ export function Header() {
                   </div>
                 </Link>
               ))}
-              <div className="flex gap-2 pt-4 border-t-[3px] border-foreground mt-2">
+              <div className="pt-4 border-t-[3px] border-foreground mt-2 space-y-2">
                 {currentUser ? (
-                  <NeuButton
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      handleLogout();
-                    }}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Logout
-                  </NeuButton>
-                ) : (
                   <>
+                    <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
+                      <div className="py-3 px-4 rounded-xl font-semibold transition-all hover:bg-muted flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        <span>Profile</span>
+                      </div>
+                    </Link>
+                    <Link to="/settings" onClick={() => setMobileMenuOpen(false)}>
+                      <div className="py-3 px-4 rounded-xl font-semibold transition-all hover:bg-muted flex items-center gap-2">
+                        <Settings className="w-4 h-4" />
+                        <span>Settings</span>
+                      </div>
+                    </Link>
+                    <NeuButton
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </NeuButton>
+                  </>
+                ) : (
+                  <div className="flex gap-2">
                     <Link to="/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
                       <NeuButton variant="outline" className="w-full">
                         Login
@@ -160,7 +197,7 @@ export function Header() {
                         Sign Up
                       </NeuButton>
                     </Link>
-                  </>
+                  </div>
                 )}
               </div>
             </nav>
