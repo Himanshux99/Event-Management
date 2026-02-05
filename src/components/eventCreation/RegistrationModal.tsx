@@ -155,7 +155,124 @@ export default function RegistrationModal({
     try {
       setRegistering(true);
 
-      // Create registration for current user
+      // If event has registration fee, create order and open Razorpay checkout
+      if (event.registrationFeeEnabled && event.registrationFeeAmount && Number(event.registrationFeeAmount) > 0) {
+        try {
+          // Direct HTTP POST call to Cloud Function
+          const response = await fetch(
+            "https://us-central1-event-management-8aa74.cloudfunctions.net/createOrder",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                amount: Number(event.registrationFeeAmount),
+                eventId: event.id,
+                userId: user.uid,
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to create payment order");
+          }
+
+          const data = await response.json();
+          const { orderId, keyId } = data;
+
+          // Open Razorpay Checkout
+          const options: any = {
+            key: keyId,
+            amount: Math.round(Number(event.registrationFeeAmount) * 100),
+            currency: "INR",
+            name: event.title,
+            description: `Registration fee for ${event.title}`,
+            order_id: orderId,
+            handler: async function (response: any) {
+              // Payment succeeded — create registration and send invites
+              try {
+                const registrationData = {
+                  userId: user.uid,
+                  eventId: event.id,
+                  eventTitle: event.title,
+                  userName: userDetails.name,
+                  userEmail: user.email,
+                  userBranch: userDetails.branch,
+                  userCollege: userDetails.college,
+                  userRollNumber: userDetails.rollNumber,
+                  userYear: userDetails.year,
+                  status: "registered",
+                  payment: {
+                    orderId: orderId,
+                    paymentId: response.razorpay_payment_id,
+                    signature: response.razorpay_signature,
+                    status: "paid",
+                  },
+                  teamMembers: teamMembers.map((tm) => ({
+                    uid: tm.uid,
+                    name: tm.name,
+                    email: tm.email,
+                    status: "pending",
+                  })),
+                  registeredAt: new Date(),
+                };
+
+                await registrationDB.create(registrationData);
+
+                if (event.isTeamEvent && teamMembers.length > 0) {
+                  for (const member of teamMembers) {
+                    const inviteData = {
+                      fromUserId: user.uid,
+                      fromUserName: userDetails.name,
+                      fromUserEmail: user.email,
+                      toUserId: member.uid,
+                      toUserEmail: member.email,
+                      toUserName: member.name,
+                      eventId: event.id,
+                      eventTitle: event.title,
+                      teamSize: teamMembers.length + 1,
+                      maxTeamSize: event.maxTeamSize,
+                      status: "pending",
+                    };
+
+                    await teamInvitesDB.create(inviteData);
+                  }
+                }
+
+                toast.success("Payment successful and registration completed.");
+                onRegistrationSuccess();
+                onClose();
+              } catch (err) {
+                console.error("Error finalizing registration after payment:", err);
+                toast.error("Payment succeeded but registration failed. Contact support.");
+              }
+            },
+            modal: {
+              ondismiss: function () {
+                toast("Payment cancelled");
+              },
+            },
+            prefill: {
+              name: userDetails.name,
+              email: user.email,
+            },
+          };
+
+          // @ts-ignore
+          const rzp = new (window as any).Razorpay(options);
+          rzp.open();
+        } catch (err) {
+          console.error("Error processing payment:", err);
+          toast.error(`Payment failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+        } finally {
+          setRegistering(false);
+        }
+        return;
+      }
+
+      // No fee — proceed with free registration
       const registrationData = {
         userId: user.uid,
         eventId: event.id,

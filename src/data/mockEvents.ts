@@ -12,6 +12,15 @@ export const mockEvents: EventData[] = [
     registeredCount: 180,
     maxCapacity: 200,
     status: "registration-open",
+    // rounds demo
+    totalRounds: 3,
+    currentRound: 1,
+    maxTeamsPerRound: [64, 32, 8],
+    rounds: [
+      { title: "Prelims", startDate: "Feb 15, 2026", endDate: "Feb 15, 2026", description: "24 hour coding session to shortlist teams." },
+      { title: "Semi-Finals", startDate: "Feb 16, 2026", endDate: "Feb 16, 2026", description: "Top teams present their projects to judges." },
+      { title: "Finals", startDate: "Feb 17, 2026", endDate: "Feb 17, 2026", description: "Final showdown and prize distribution." },
+    ],
   },
   {
     id: "2",
@@ -36,6 +45,13 @@ export const mockEvents: EventData[] = [
     registeredCount: 64,
     maxCapacity: 64,
     status: "registration-closed",
+    totalRounds: 2,
+    currentRound: 2,
+    maxTeamsPerRound: [64, 16],
+    rounds: [
+      { title: "Preliminary", startDate: "Feb 25, 2026", description: "Preliminary rounds to shortlist 16 teams." },
+      { title: "Finals", startDate: "Feb 25, 2026", description: "Final debate among top teams." },
+    ],
   },
   {
     id: "4",

@@ -45,6 +45,7 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
   const navigate = useNavigate();
   const authContext = useAuth();
   const user = authContext?.currentUser;
+  const { currentUser } = useAuth();
 
   const initialDate = initialData?.date
     ? parse(initialData.date, "MMM d, yyyy", new Date())
@@ -64,6 +65,8 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
   const [rounds, setRounds] = useState(
     initialData?.rounds || []
   );
+  const [registrationFeeEnabled, setRegistrationFeeEnabled] = useState<boolean>(initialData?.registrationFeeEnabled || false);
+  const [registrationFeeAmount, setRegistrationFeeAmount] = useState<string>(initialData?.registrationFeeAmount ? String(initialData.registrationFeeAmount) : "");
   const [eligibleYear, setEligibleYear] = useState<string[]>(
     (() => {
       const y = initialData?.eligibility?.year;
@@ -87,6 +90,7 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
   const [rulebookFile, setRulebookFile] = useState<File | null>(null);
   const [description, setDescription] = useState(initialData?.description || "");
   const [guidelines, setGuidelines] = useState(initialData?.guidelines || "");
+  const [registrationFee, setRegistrationFee] = useState("");
   const [eventHeads, setEventHeads] = useState<any[]>(
     Array.isArray(initialData?.contact)
       ? initialData.contact
@@ -198,6 +202,8 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
         rounds: rounds,
         description: description,
         guidelines: guidelines,
+        registrationFeeEnabled: registrationFeeEnabled,
+        registrationFeeAmount: registrationFeeEnabled ? parseFloat(registrationFeeAmount || "0") : 0,
         eligibility: {
           year: eligibleYear,
           branch: eligibleBranch,
@@ -286,6 +292,8 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
         rounds: rounds,
         description: description,
         guidelines: guidelines,
+        registrationFeeEnabled: registrationFeeEnabled,
+        registrationFeeAmount: registrationFeeEnabled ? parseFloat(registrationFeeAmount || "0") : 0,
         eligibility: {
           year: eligibleYear,
           branch: eligibleBranch,
@@ -407,6 +415,10 @@ const EventCreation = ({ initialData, draftId, isEditingDraft }: EventCreationPr
                 setEventDescription={setEventDescription}
                 rounds={rounds}
                 setRounds={setRounds}
+                registrationFeeEnabled={registrationFeeEnabled}
+                setRegistrationFeeEnabled={setRegistrationFeeEnabled}
+                registrationFeeAmount={registrationFeeAmount}
+                setRegistrationFeeAmount={setRegistrationFeeAmount}
               />
 
               <EligibilityRules

@@ -143,7 +143,7 @@ export default function OrganizerDashboard() {
           </Link>
         </motion.div>
 
-        <StatsGrid stats={computedStats} />
+        {/* <StatsGrid stats={computedStats} /> */}
 
         <DraftsSection draftEvents={draftEvents} onDelete={handleDeleteDraft} />
 

@@ -5,7 +5,7 @@ import { NeuButton } from "@/components/ui/NeuButton";
 import { NeuCard } from "@/components/ui/NeuCard";
 import { NeuInput } from "@/components/ui/NeuInput";
 import { NeuBadge } from "@/components/ui/NeuBadge";
-import { eventCategories } from "@/data/mockEvents";
+import { eventCategories, mockEvents } from "@/data/mockEvents";
 import { eventDB } from "@/lib/firebaseDB";
 import { where } from "firebase/firestore";
 import { motion } from "framer-motion";
@@ -24,17 +24,31 @@ export default function Events() {
   const [displayEvents, setDisplayEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch published and open for registration events from Firestore
+  // Fetch published and open for registration events from Firestore + mock data
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
+        
+        // Fetch from Firestore
         const publishedEvents = await eventDB.getByQuery([
-          where("status", "in", ["published", "registration-open","registration-closed"])
+          where("status", "in", ["published", "registration-open", "registration-closed"])
         ]);
-        setDisplayEvents(publishedEvents);
+        
+        // Combine DB events with mock events
+        // Mock events are used for demo/testing, DB events are real
+        const allEvents = [...publishedEvents, ...mockEvents];
+        
+        // Remove duplicates by ID if any
+        const uniqueEvents = Array.from(
+          new Map(allEvents.map(event => [event.id, event])).values()
+        );
+        
+        setDisplayEvents(uniqueEvents);
       } catch (error) {
         console.error("Error fetching events:", error);
+        // Fall back to mock events on error
+        setDisplayEvents(mockEvents);
       } finally {
         setLoading(false);
       }

@@ -12,7 +12,16 @@ export const DEMO_EVENTS = [
     isTeamEvent: true,
     minTeamSize: 2,
     maxTeamSize: 4,
-    prizes: { first: "₹20,000", second: "₹10,000", third: "₹5,000" }
+    prizes: { first: "₹20,000", second: "₹10,000", third: "₹5,000" },
+    // rounds configuration for demo
+    totalRounds: 3,
+    currentRound: 1,
+    maxTeamsPerRound: [128, 32, 8],
+    rounds: [
+      { title: "Prelims", startDate: "Mar 15, 2024", description: "24-hour coding session." },
+      { title: "Semi-Finals", startDate: "Mar 16, 2024", description: "Top teams present prototypes." },
+      { title: "Finals", startDate: "Mar 17, 2024", description: "Final presentations and awards." },
+    ]
   },
   {
     title: "Annual Cultural Fest - Euphoria",

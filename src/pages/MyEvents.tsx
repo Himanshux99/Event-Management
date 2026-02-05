@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { NeuButton } from "@/components/ui/NeuButton";
 import { NeuCard } from "@/components/ui/NeuCard";
 import { NeuBadge } from "@/components/ui/NeuBadge";
 import TeamInvitations from "@/components/TeamInvitations";
-import { mockEvents } from "@/data/mockEvents";
 import { useAuth } from "@/context/authContext";
+import { registrationDB, eventDB } from "@/lib/firebaseDB";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import {
   Calendar,
   Clock,
@@ -18,29 +19,85 @@ import {
   AlertCircle,
   ArrowRight,
   Users,
+  Loader2,
 } from "lucide-react";
 
 type TabType = "upcoming" | "past" | "waitlisted" | "invitations";
 
-// Mock user's registered events
-const userEvents = {
-  upcoming: mockEvents.slice(0, 3),
-  past: mockEvents.slice(3, 5),
-  waitlisted: mockEvents.slice(5, 6),
-};
+interface EventWithRegistration {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  venue: string;
+  category: string;
+  type: "inter-college" | "intra-college";
+  registrationStatus: "registered" | "waitlisted" | "completed" | "cancelled";
+}
 
 export default function MyEvents() {
   const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("upcoming");
+  const [allEvents, setAllEvents] = useState<EventWithRegistration[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user's registrations
+  useEffect(() => {
+    const fetchUserRegistrations = async () => {
+      if (!currentUser) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const registrations = await registrationDB.getByUserId(currentUser.uid);
+
+        // Fetch full event details for each registration
+        const eventsWithRegistration: EventWithRegistration[] = [];
+        for (const reg of registrations as any) {
+          const eventId = reg.eventId;
+          const status = reg.status || "registered";
+          const event = await eventDB.getById(eventId);
+          if (event) {
+            eventsWithRegistration.push({
+              id: eventId,
+              title: event?.title || "",
+              date: event?.date || "",
+              time: event?.time || "",
+              venue: event?.venue || "",
+              category: event?.category || "",
+              type: event?.type || "intra-college",
+              registrationStatus: status as any,
+            });
+          }
+        }
+
+        setAllEvents(eventsWithRegistration);
+      } catch (error) {
+        console.error("Error fetching registrations:", error);
+        toast.error("Failed to load your events");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserRegistrations();
+  }, [currentUser]);
+
+  // Filter events by status
+  const upcomingEvents = allEvents.filter(e => e.registrationStatus === "registered");
+  const pastEvents = allEvents.filter(e => e.registrationStatus === "completed");
+  const waitlistedEvents = allEvents.filter(e => e.registrationStatus === "waitlisted");
 
   const tabs = [
-    { id: "upcoming" as TabType, label: "Upcoming", count: userEvents.upcoming.length },
-    { id: "past" as TabType, label: "Past", count: userEvents.past.length },
-    { id: "waitlisted" as TabType, label: "Waitlisted", count: userEvents.waitlisted.length },
+    { id: "upcoming" as TabType, label: "Upcoming", count: upcomingEvents.length },
+    { id: "past" as TabType, label: "Past", count: pastEvents.length },
+    { id: "waitlisted" as TabType, label: "Waitlisted", count: waitlistedEvents.length },
     { id: "invitations" as TabType, label: "Team Invitations", icon: Users },
   ];
 
-  const currentEvents = activeTab !== "invitations" ? userEvents[activeTab as Exclude<TabType, "invitations">] : [];
+  const currentEvents = activeTab === "upcoming" ? upcomingEvents : activeTab === "past" ? pastEvents : activeTab === "waitlisted" ? waitlistedEvents : [];
 
   return (
     <Layout>
@@ -92,7 +149,12 @@ export default function MyEvents() {
         </motion.div>
 
         {/* Events List */}
-        {activeTab === "invitations" ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <span className="ml-3 text-muted-foreground">Loading your events...</span>
+          </div>
+        ) : activeTab === "invitations" ? (
           currentUser ? (
             <TeamInvitations userId={currentUser.uid} />
           ) : (
@@ -129,16 +191,22 @@ export default function MyEvents() {
                         <NeuBadge variant="outline" size="sm">
                           {event.category}
                         </NeuBadge>
-                        {activeTab === "upcoming" && (
+                        {event.registrationStatus === "registered" && (
                           <NeuBadge variant="success" size="sm">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             Confirmed
                           </NeuBadge>
                         )}
-                        {activeTab === "waitlisted" && (
+                        {event.registrationStatus === "waitlisted" && (
                           <NeuBadge variant="warning" size="sm">
                             <AlertCircle className="w-3 h-3 mr-1" />
                             Waitlisted
+                          </NeuBadge>
+                        )}
+                        {event.registrationStatus === "completed" && (
+                          <NeuBadge variant="success" size="sm">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Completed
                           </NeuBadge>
                         )}
                       </div>
@@ -167,7 +235,7 @@ export default function MyEvents() {
                             <ArrowRight className="w-4 h-4" />
                           </NeuButton>
                         </Link>
-                        {activeTab === "upcoming" && (
+                        {event.registrationStatus === "registered" && (
                           <Link to={`/my-events/${event.id}/qr`}>
                             <NeuButton variant="primary" size="sm">
                               <QrCode className="w-4 h-4" />
@@ -190,7 +258,7 @@ export default function MyEvents() {
               {activeTab === "upcoming"
                 ? "You haven't registered for any upcoming events yet."
                 : activeTab === "past"
-                ? "You haven't attended any events yet."
+                ? "You haven't completed any events yet."
                 : "You're not on any waitlists."}
             </p>
             <Link to="/events">
